@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Portal Upsert Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; background: #f5f7fa; color: #212121; min-height: 100vh; }
+        .page-header { background: linear-gradient(135deg, #1565c0, #1976d2, #2196f3, #1565c0); background-size: 300% 300%; animation: gradientShift 8s ease infinite; padding: 20px 24px 16px; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .tool-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tool-nav a { padding: 7px 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.78rem; font-weight: 500; transition: all 0.25s ease; white-space: nowrap; }
+        .tool-nav a:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .tool-nav a.active { background: #fff; color: #1976d2; border-color: #fff; font-weight: 600; }
+        .container { max-width: 920px; margin: 0 auto; padding: 24px; }
+        h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: #212121; letter-spacing: -0.4px; }
+        .subtitle { color: #80878F; font-size: 0.85rem; margin-bottom: 24px; }
+        .card { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.3s ease, opacity 0.3s ease; opacity: 0; animation: cardFadeIn 0.4s ease forwards; }
+        .card:nth-child(1) { animation-delay: 0.05s; } .card:nth-child(2) { animation-delay: 0.1s; } .card:nth-child(3) { animation-delay: 0.15s; } .card:nth-child(4) { animation-delay: 0.2s; }
+        @keyframes cardFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card-disabled { opacity: 0.5 !important; pointer-events: none; }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; color: #212121; display: flex; align-items: center; gap: 8px; }
+        .card-title .badge { color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+        .badge-blue { background: #1976d2; }
+        .badge-green { background: #4caf50; }
+        .badge-amber { background: #ff9800; }
+        .badge-purple { background: #7b1fa2; }
+        label { display: block; font-size: 0.82rem; font-weight: 500; color: #4E545C; margin-bottom: 6px; }
+        input[type="text"] { width: 100%; padding: 10px 14px; background: #f9fafb; border: 1px solid #d5dbe3; border-radius: 8px; color: #212121; font-size: 0.85rem; font-family: 'SF Mono', 'Fira Code', monospace; transition: all 0.25s ease; }
+        input:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,0.1); background: #fff; }
+        .env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .env-option { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 10px; cursor: pointer; transition: all 0.25s ease; user-select: none; }
+        .env-option:hover { border-color: #bbdefb; background: #f0f7ff; }
+        .env-option.selected { border-color: #1976d2; background: #e3f2fd; box-shadow: 0 0 0 3px rgba(25,118,210,0.08); }
+        .env-option input[type="checkbox"] { accent-color: #1976d2; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+        .env-label { font-size: 0.85rem; font-weight: 600; color: #212121; }
+        .env-url-display { font-size: 0.7rem; color: #80878F; margin-top: 2px; font-family: 'SF Mono', 'Fira Code', monospace; }
+        .env-url-edit { margin-top: 6px; }
+        .env-url-edit input { font-size: 0.78rem; padding: 7px 10px; background: #fff; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); font-family: inherit; white-space: nowrap; }
+        .btn-primary { background: #1976d2; color: #fff; box-shadow: 0 2px 8px rgba(25,118,210,0.25); }
+        .btn-primary:hover { background: #1565c0; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(25,118,210,0.35); }
+        .btn-primary:disabled { background: #bbdefb; color: #90caf9; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-green { background: #4caf50; color: #fff; box-shadow: 0 2px 8px rgba(76,175,80,0.25); }
+        .btn-green:hover { background: #388e3c; transform: translateY(-1px); }
+        .btn-amber { background: #ff9800; color: #fff; box-shadow: 0 2px 8px rgba(255,152,0,0.25); }
+        .btn-amber:hover { background: #e65100; transform: translateY(-1px); }
+        .btn-purple { background: #7b1fa2; color: #fff; box-shadow: 0 2px 8px rgba(123,31,162,0.25); }
+        .btn-purple:hover { background: #6a1b9a; transform: translateY(-1px); }
+        .btn-sm { padding: 7px 14px; font-size: 0.78rem; }
+        .btn-outline { background: transparent; border: 1px solid #d5dbe3; color: #4E545C; }
+        .btn-outline:hover { border-color: #1976d2; color: #1976d2; }
+        .btn-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .form-group { margin-bottom: 16px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .info-box { background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+        .info-box p { font-size: 0.8rem; color: #1565c0; line-height: 1.6; }
+        .hint { font-size: 0.75rem; color: #80878F; margin-top: 6px; line-height: 1.5; }
+        .hint code { background: #e3f2fd; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem; color: #1565c0; }
+        .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { padding: 8px 20px; background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.25s ease; user-select: none; color: #4E545C; }
+        .chip:hover { border-color: #bbdefb; }
+        .chip.active { border-color: #1976d2; background: #e3f2fd; color: #1565c0; }
+        .chip.get.active { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
+        .chip.post.active { border-color: #ff9800; background: #fff3e0; color: #e65100; }
+        .chip.put.active { border-color: #1976d2; background: #e3f2fd; color: #1565c0; }
+        .chip.delete.active { border-color: #f44336; background: #fce4ec; color: #c62828; }
+        .token-card { background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 10px; margin-bottom: 10px; overflow: hidden; animation: fadeSlideIn 0.3s ease; }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .token-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; }
+        .token-header .env-name { font-weight: 600; font-size: 0.85rem; color: #212121; }
+        .token-status { font-size: 0.75rem; padding: 4px 12px; border-radius: 99px; font-weight: 600; }
+        .token-status.success { background: #e8f5e9; color: #2e7d32; }
+        .token-status.error { background: #fce4ec; color: #c62828; }
+        .token-status.pending { background: #fff8e1; color: #f57f17; }
+        .token-status.confirmed { background: #f3e5f5; color: #7b1fa2; }
+        .token-body { padding: 0 14px 12px; display: flex; align-items: center; gap: 10px; }
+        .token-value { flex: 1; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; color: #4E545C; background: #fff; border: 1px solid #e8ecf1; padding: 8px 12px; border-radius: 6px; word-break: break-all; }
+        .token-actions { display: flex; gap: 6px; }
+        .result-block { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; margin-top: 12px; overflow: hidden; animation: fadeSlideIn 0.3s ease; }
+        .result-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #e8ecf1; }
+        .result-header .env-name { font-weight: 600; font-size: 0.85rem; color: #212121; }
+        .result-body { padding: 12px 14px; }
+        .result-body pre { background: #1a2332; padding: 14px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; line-height: 1.7; color: #c8d6e5; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(25,118,210,0.2); border-top-color: #1976d2; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .step-indicator { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .step { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #80878F; transition: all 0.3s ease; }
+        .step.active { color: #1976d2; }
+        .step.done { color: #4caf50; }
+        .step-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; border: 2px solid #d5dbe3; color: #80878F; transition: all 0.3s ease; }
+        .step.active .step-num { border-color: #1976d2; color: #1976d2; background: #e3f2fd; }
+        .step.done .step-num { border-color: #4caf50; color: #fff; background: #4caf50; }
+        .step-arrow { color: #d5dbe3; font-size: 0.9rem; }
+        .curl-preview { background: #1a2332; border: 1px solid #2d3e50; border-radius: 10px; padding: 14px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; line-height: 1.8; color: #c8d6e5; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; }
+        @media (max-width: 640px) {
+            .container { padding: 14px; }
+            h1 { font-size: 1.25rem; }
+            .card { padding: 16px; }
+            .env-grid { grid-template-columns: 1fr; gap: 8px; }
+            .form-row { grid-template-columns: 1fr; }
+            .chip { padding: 10px 16px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+            .btn { min-height: 44px; }
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; }
+            .step-arrow { display: none; }
+            .token-body { flex-direction: column; gap: 8px; }
+            .token-actions { width: 100%; }
+            .token-actions .btn { width: 100%; min-height: 44px; }
+            .tool-nav { gap: 4px; }
+            .tool-nav a { padding: 8px 10px; font-size: 0.72rem; flex: 1; text-align: center; min-height: 38px; display: flex; align-items: center; justify-content: center; }
+            .page-header { padding: 14px 14px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <nav class="tool-nav">
+            <a href="./index.html">All Tools</a>
+            <a href="./generic-api-config-tool.html">API Config</a>
+            <a href="./ops-tool.html">Ops</a>
+            <a href="./developer-portal-tool.html" class="active">Dev Portal</a>
+            <a href="./curl-builder-tool.html">Curl Builder</a>
+        </nav>
+    </div>
+    <div class="container">
+        <h1>Developer Portal Upsert Tool</h1>
+        <p class="subtitle">Configure and upsert developer portal API endpoints across Armor environments</p>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator" id="stepIndicator">
+            <div class="step active" id="step1"><span class="step-num">1</span> Select Envs</div>
+            <span class="step-arrow">&rarr;</span>
+            <div class="step" id="step2"><span class="step-num">2</span> Generate Tokens</div>
+            <span class="step-arrow">&rarr;</span>
+            <div class="step" id="step3"><span class="step-num">3</span> Configure & Execute</div>
+        </div>
+
+        <!-- ==================== STEP 1: Environments ==================== -->
+        <div class="card">
+            <div class="card-title">Environments <span class="badge badge-blue">Multi-select</span></div>
+            <div class="info-box">
+                <p>Select target environments. Edit the base URL if you need a different instance number.</p>
+            </div>
+            <div class="env-grid" id="envGrid">
+                <label class="env-option" data-env="demo">
+                    <input type="checkbox" value="demo">
+                    <div style="flex:1;">
+                        <div class="env-label">Demo</div>
+                        <div class="env-url-display">dev-armor22.birdeye.internal:8080</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-demo" value="http://dev-armor22.birdeye.internal:8080">
+                        </div>
+                    </div>
+                </label>
+                <label class="env-option" data-env="preprod">
+                    <input type="checkbox" value="preprod">
+                    <div style="flex:1;">
+                        <div class="env-label">Preprod</div>
+                        <div class="env-url-display">preprod6-armor.birdeye.internal:8080</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-preprod" value="http://preprod6-armor.birdeye.internal:8080">
+                        </div>
+                    </div>
+                </label>
+                <label class="env-option" data-env="qa">
+                    <input type="checkbox" value="qa">
+                    <div style="flex:1;">
+                        <div class="env-label">QA</div>
+                        <div class="env-url-display">qa-armor5.birdeye.internal:8080</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-qa" value="http://qa-armor5.birdeye.internal:8080">
+                        </div>
+                    </div>
+                </label>
+                <label class="env-option" data-env="eu">
+                    <input type="checkbox" value="eu">
+                    <div style="flex:1;">
+                        <div class="env-label">EU</div>
+                        <div class="env-url-display">eucent1-armor.birdeye.internal</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-eu" value="http://eucent1-armor.birdeye.internal">
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- ==================== STEP 2: Token Generation ==================== -->
+        <div class="card">
+            <div class="card-title">Access Token Generation <span class="badge badge-green">Step 2</span></div>
+            <div class="info-box">
+                <p>Access token is required <strong>only for Preprod</strong>. Other environments (Demo, QA, EU) do not need a token and will proceed directly to upsert.</p>
+            </div>
+            <div class="btn-group" style="margin-top:0;">
+                <button class="btn btn-green" id="generateBtn" onclick="generateTokens()" disabled>Proceed with Selected Envs</button>
+            </div>
+            <div id="token-results" style="margin-top:12px;"></div>
+            <div class="btn-group hidden" id="confirmAllRow">
+                <button class="btn btn-purple btn-sm" onclick="confirmAllTokens()">Confirm All Tokens</button>
+            </div>
+        </div>
+
+        <!-- ==================== STEP 3: Upsert Configuration ==================== -->
+        <div class="card card-disabled" id="upsertCard">
+            <div class="card-title">Upsert Configuration <span class="badge badge-amber">Step 3</span></div>
+
+            <div class="form-group">
+                <label>HTTP Method</label>
+                <div class="chip-group" id="methodChips">
+                    <div class="chip get" data-val="GET">GET</div>
+                    <div class="chip post" data-val="POST">POST</div>
+                    <div class="chip put" data-val="PUT">PUT</div>
+                    <div class="chip delete" data-val="DELETE">DELETE</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Path</label>
+                <input type="text" id="upsertPath" placeholder="e.g. /resources/v1/review/businessId/*">
+                <div class="hint">Use <code>*</code> for dynamic path variables</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Module</label>
+                    <input type="text" id="upsertModule" placeholder="e.g. REVIEWS">
+                </div>
+                <div class="form-group">
+                    <label>Scope</label>
+                    <div class="chip-group" id="scopeChips">
+                        <div class="chip" data-val="Read">Read</div>
+                        <div class="chip" data-val="Write">Write</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Hidden</label>
+                <div class="chip-group" id="hiddenChips">
+                    <div class="chip" data-val="0">0 (Visible)</div>
+                    <div class="chip" data-val="1">1 (Hidden)</div>
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="form-group">
+                <label>Request Preview</label>
+                <div class="curl-preview" id="curlPreview">Fill in the fields above to see the request preview...</div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-amber" id="executeBtn" onclick="executeUpsert()" disabled>Execute on Confirmed Environments</button>
+            </div>
+
+            <div id="upsert-results" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const PROXY_URL = window.location.origin + '/ambassador/admin/tools/proxy';
+        const REQUEST_TIMEOUT_MS = 15000;
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = function(resource, options) {
+            options = options || {};
+            if (options.signal) return originalFetch(resource, options);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(function() { controller.abort(); }, REQUEST_TIMEOUT_MS);
+            return originalFetch(resource, Object.assign({}, options, { signal: controller.signal }))
+                .catch(function(err) {
+                    if (err.name === 'AbortError') {
+                        throw new Error('Request timed out after ' + (REQUEST_TIMEOUT_MS / 1000) + 's. If this is hosted on GitHub Pages, Execute will not work because the Node proxy is not running.');
+                    }
+                    throw err;
+                })
+                .finally(function() { clearTimeout(timeoutId); });
+        };
+
+        async function readProxyJson(resp) {
+            const contentType = resp.headers.get('content-type') || '';
+            if (!resp.ok) {
+                throw new Error('Proxy endpoint unavailable (' + resp.status + '). Execute requires server.js; GitHub Pages/static hosting only serves the UI.');
+            }
+            if (contentType.indexOf('application/json') === -1) {
+                await resp.text();
+                throw new Error('Proxy endpoint did not return JSON. Execute requires the Node server.js proxy; GitHub Pages/static hosting cannot execute requests.');
+            }
+            return await resp.json();
+        }
+
+        const ENV_NAMES = { demo: 'Demo', preprod: 'Preprod', qa: 'QA', eu: 'EU' };
+
+        // State
+        // confirmedEnvs: { envKey: { url, token (only for preprod) } }
+        let confirmedEnvs = {};
+        let selectedMethod = null;
+        let selectedScope = null;
+        let selectedHidden = null;
+
+        // ==================== ENV SELECTION ====================
+        document.querySelectorAll('.env-option').forEach(function(opt) {
+            var cb = opt.querySelector('input[type="checkbox"]');
+            cb.addEventListener('change', function() {
+                opt.classList.toggle('selected', cb.checked);
+                updateGenerateBtn();
+            });
+            opt.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'INPUT' && e.target.type !== 'text') {
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+
+        function getSelectedEnvs() {
+            var envs = [];
+            document.querySelectorAll('.env-option input[type="checkbox"]:checked').forEach(function(cb) {
+                envs.push(cb.value);
+            });
+            return envs;
+        }
+
+        function getEnvUrl(envKey) {
+            return document.getElementById('env-url-' + envKey).value.trim().replace(/\/$/, '');
+        }
+
+        function updateGenerateBtn() {
+            document.getElementById('generateBtn').disabled = getSelectedEnvs().length === 0;
+        }
+
+        // ==================== CHIP SELECTORS ====================
+        function setupChips(containerId, callback) {
+            document.querySelectorAll('#' + containerId + ' .chip').forEach(function(chip) {
+                chip.addEventListener('click', function() {
+                    document.querySelectorAll('#' + containerId + ' .chip').forEach(function(c) { c.classList.remove('active'); });
+                    chip.classList.add('active');
+                    callback(chip.dataset.val);
+                });
+            });
+        }
+
+        setupChips('methodChips', function(val) { selectedMethod = val; updatePreview(); });
+        setupChips('scopeChips', function(val) { selectedScope = val; updatePreview(); });
+        setupChips('hiddenChips', function(val) { selectedHidden = parseInt(val); updatePreview(); });
+
+        document.getElementById('upsertPath').addEventListener('input', updatePreview);
+        document.getElementById('upsertModule').addEventListener('input', updatePreview);
+
+        // ==================== PREVIEW ====================
+        function buildPayload() {
+            return {
+                method: selectedMethod,
+                path: document.getElementById('upsertPath').value.trim(),
+                module: document.getElementById('upsertModule').value.trim(),
+                scope: selectedScope,
+                hidden: selectedHidden
+            };
+        }
+
+        function updatePreview() {
+            var preview = document.getElementById('curlPreview');
+            var executeBtn = document.getElementById('executeBtn');
+            var payload = buildPayload();
+            var readyCount = Object.keys(confirmedEnvs).length;
+
+            var canExecute = readyCount > 0 && payload.method && payload.path && payload.module && payload.scope != null && payload.hidden != null;
+            executeBtn.disabled = !canExecute;
+
+            if (!payload.method || !payload.path) {
+                preview.textContent = 'Fill in the fields above to see the request preview...';
+                return;
+            }
+
+            var envList = Object.keys(confirmedEnvs).map(function(k) { return ENV_NAMES[k]; }).join(', ') || 'None ready';
+            var tokenLine = "--header 'armor-admin-access-token: {{TOKEN}}' \\\n";
+            preview.textContent =
+                "curl --location '{{ENV_URL}}/resources/v1/developer-portal/upsert' \\\n" +
+                "--header 'Content-Type: application/json' \\\n" +
+                "--header 'Accept: application/json' \\\n" +
+                (confirmedEnvs['preprod'] ? tokenLine : '') +
+                "--data '" + JSON.stringify(payload, null, 4) + "'\n\n" +
+                "Ready environments: " + envList +
+                (confirmedEnvs['preprod'] ? ' (Preprod includes access token)' : '');
+        }
+
+        // ==================== STEP INDICATOR ====================
+        function setStep(n) {
+            ['step1', 'step2', 'step3'].forEach(function(id, i) {
+                var el = document.getElementById(id);
+                el.classList.remove('active', 'done');
+                if (i + 1 < n) el.classList.add('done');
+                else if (i + 1 === n) el.classList.add('active');
+            });
+        }
+
+        // ==================== PROXY HELPER ====================
+        async function proxyFetch(targetUrl, method, payload, headers) {
+            var body = { targetUrl: targetUrl, method: method || 'GET' };
+            if (payload) body.payload = payload;
+            if (headers) body.headers = headers;
+            var resp = await fetch(PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return await readProxyJson(resp);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ==================== TOKEN GENERATION ====================
+        async function generateTokens() {
+            var envs = getSelectedEnvs();
+            if (envs.length === 0) return;
+
+            setStep(2);
+            confirmedEnvs = {};
+            var container = document.getElementById('token-results');
+            container.innerHTML = '';
+            document.getElementById('confirmAllRow').classList.add('hidden');
+            document.getElementById('upsertCard').classList.add('card-disabled');
+
+            var generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<span class="spinner"></span>Processing...';
+
+            var hasPreprod = envs.includes('preprod');
+            var nonPreprodEnvs = envs.filter(function(e) { return e !== 'preprod'; });
+
+            // Auto-ready non-preprod environments (no token needed)
+            nonPreprodEnvs.forEach(function(envKey) {
+                var envName = ENV_NAMES[envKey];
+                confirmedEnvs[envKey] = { url: getEnvUrl(envKey), token: null };
+
+                var card = document.createElement('div');
+                card.className = 'token-card';
+                card.id = 'token-' + envKey;
+                card.innerHTML =
+                    '<div class="token-header">' +
+                        '<span class="env-name">' + envName + '</span>' +
+                        '<span class="token-status success">Ready (no token needed)</span>' +
+                    '</div>';
+                container.appendChild(card);
+            });
+
+            // Generate token only for Preprod
+            if (hasPreprod) {
+                var baseUrl = getEnvUrl('preprod');
+                var url = baseUrl + '/admin/generate/access-token';
+
+                var card = document.createElement('div');
+                card.className = 'token-card';
+                card.id = 'token-preprod';
+                card.innerHTML =
+                    '<div class="token-header">' +
+                        '<span class="env-name">Preprod</span>' +
+                        '<span class="token-status pending"><span class="spinner"></span>Generating token</span>' +
+                    '</div>';
+                container.appendChild(card);
+
+                try {
+                    var data = await proxyFetch(url, 'GET', null, { 'payment-slug': 'yogesh@99999' });
+                    var el = document.getElementById('token-preprod');
+
+                    if (data.error || !data.body) {
+                        el.querySelector('.token-status').className = 'token-status error';
+                        el.querySelector('.token-status').textContent = 'Failed';
+                        el.innerHTML += '<div class="token-body"><span class="token-value" style="color:#f87171;">' +
+                            escapeHtml(data.error || 'No response body') + '</span></div>';
+                    } else {
+                        var parsed;
+                        try { parsed = JSON.parse(data.body); } catch(e) { parsed = {}; }
+                        var token = parsed['armor-admin-access-token'];
+
+                        if (!token) {
+                            el.querySelector('.token-status').className = 'token-status error';
+                            el.querySelector('.token-status').textContent = 'No token in response';
+                            el.innerHTML += '<div class="token-body"><span class="token-value">' +
+                                escapeHtml(data.body) + '</span></div>';
+                        } else {
+                            el.querySelector('.token-status').className = 'token-status success';
+                            el.querySelector('.token-status').textContent = 'Token received';
+                            el.innerHTML +=
+                                '<div class="token-body">' +
+                                    '<span class="token-value">' + escapeHtml(token) + '</span>' +
+                                    '<div class="token-actions">' +
+                                        '<button class="btn btn-purple btn-sm" onclick="confirmPreprodToken(\'' + escapeHtml(token) + '\')">Confirm & Include</button>' +
+                                    '</div>' +
+                                '</div>';
+                            document.getElementById('confirmAllRow').classList.remove('hidden');
+                        }
+                    }
+                } catch(err) {
+                    var el = document.getElementById('token-preprod');
+                    el.querySelector('.token-status').className = 'token-status error';
+                    el.querySelector('.token-status').textContent = 'Failed';
+                    el.innerHTML += '<div class="token-body"><span class="token-value" style="color:#f87171;">' +
+                        escapeHtml(err.message) + '</span></div>';
+                }
+            }
+
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = 'Proceed with Selected Envs';
+
+            // Enable upsert card if at least one env is ready
+            if (Object.keys(confirmedEnvs).length > 0) {
+                setStep(3);
+                document.getElementById('upsertCard').classList.remove('card-disabled');
+            }
+            updatePreview();
+        }
+
+        function confirmPreprodToken(token) {
+            confirmedEnvs['preprod'] = { url: getEnvUrl('preprod'), token: token };
+
+            var el = document.getElementById('token-preprod');
+            el.querySelector('.token-status').className = 'token-status confirmed';
+            el.querySelector('.token-status').textContent = 'Confirmed';
+            var confirmBtn = el.querySelector('.btn-purple');
+            if (confirmBtn) {
+                confirmBtn.textContent = 'Confirmed';
+                confirmBtn.disabled = true;
+                confirmBtn.style.opacity = '0.5';
+            }
+
+            setStep(3);
+            document.getElementById('upsertCard').classList.remove('card-disabled');
+            updatePreview();
+        }
+
+        function confirmAllTokens() {
+            var btn = document.querySelector('#token-preprod .btn-purple');
+            if (btn && !btn.disabled) {
+                btn.click();
+            }
+        }
+
+        // ==================== UPSERT EXECUTION ====================
+        async function executeUpsert() {
+            var entries = Object.entries(confirmedEnvs);
+            if (entries.length === 0) return;
+
+            var payload = buildPayload();
+            if (!payload.method || !payload.path || !payload.module || !payload.scope || payload.hidden == null) {
+                alert('Please fill in all fields.');
+                return;
+            }
+
+            var container = document.getElementById('upsert-results');
+            container.innerHTML = '';
+            var executeBtn = document.getElementById('executeBtn');
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<span class="spinner"></span>Executing...';
+
+            await Promise.allSettled(entries.map(async function(entry) {
+                var envKey = entry[0];
+                var info = entry[1];
+                var envName = ENV_NAMES[envKey];
+                var url = info.url + '/resources/v1/developer-portal/upsert';
+
+                // Show pending
+                var div = document.createElement('div');
+                div.className = 'result-block';
+                div.id = 'upsert-result-' + envKey;
+                div.innerHTML =
+                    '<div class="result-header">' +
+                        '<span class="env-name">' + envName + '</span>' +
+                        '<span class="token-status pending"><span class="spinner"></span>Executing</span>' +
+                    '</div>';
+                container.appendChild(div);
+
+                try {
+                    // Only include armor-admin-access-token for Preprod
+                    var headers = {};
+                    if (envKey === 'preprod' && info.token) {
+                        headers['armor-admin-access-token'] = info.token;
+                    }
+
+                    var data = await proxyFetch(url, 'POST', payload, Object.keys(headers).length > 0 ? headers : null);
+
+                    var el = document.getElementById('upsert-result-' + envKey);
+                    var isOk = data.status && data.status >= 200 && data.status < 300;
+                    var statusClass = data.error ? 'error' : (isOk ? 'success' : 'error');
+                    var statusText = data.error ? 'Failed' : (data.status + ' ' + data.statusText);
+                    var bodyText = data.error || data.body || '';
+                    try { bodyText = JSON.stringify(JSON.parse(bodyText), null, 2); } catch(e) {}
+
+                    el.innerHTML =
+                        '<div class="result-header">' +
+                            '<span class="env-name">' + envName + '</span>' +
+                            '<span class="token-status ' + statusClass + '">' + statusText + '</span>' +
+                        '</div>' +
+                        '<div class="result-body"><pre>' + escapeHtml(bodyText) + '</pre></div>';
+                } catch(err) {
+                    var el = document.getElementById('upsert-result-' + envKey);
+                    el.innerHTML =
+                        '<div class="result-header">' +
+                            '<span class="env-name">' + envName + '</span>' +
+                            '<span class="token-status error">Failed</span>' +
+                        '</div>' +
+                        '<div class="result-body"><pre>' + escapeHtml(err.message) + '</pre></div>';
+                }
+            }));
+
+            executeBtn.disabled = false;
+            executeBtn.innerHTML = 'Execute on Ready Environments';
+        }
+    </script>
+</body>
+</html>

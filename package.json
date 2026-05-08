@@ -1,0 +1,13 @@
+{
+  "name": "generic-api-config-tool",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Standalone Ambassador admin tools UI.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

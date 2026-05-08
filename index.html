@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambassador Admin Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; background: #f5f7fa; color: #212121; min-height: 100vh; }
+
+        /* Animated gradient header */
+        .page-header { background: linear-gradient(135deg, #1565c0, #1976d2, #2196f3, #1565c0); background-size: 300% 300%; animation: gradientShift 8s ease infinite; padding: 48px 24px 40px; text-align: center; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .page-header h1 { font-size: 1.75rem; font-weight: 700; color: #fff; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .page-header .subtitle { color: rgba(255,255,255,0.85); font-size: 0.9rem; font-weight: 400; }
+        .logo-mark { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .logo-mark svg { width: 36px; height: 36px; }
+        .logo-mark span { font-size: 1.1rem; font-weight: 600; color: rgba(255,255,255,0.9); letter-spacing: 1px; text-transform: uppercase; }
+
+        .container { max-width: 800px; margin: -32px auto 0; padding: 0 24px 48px; position: relative; z-index: 1; }
+
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        .tool-card {
+            background: #fff;
+            border: 1px solid #e8ecf1;
+            border-radius: 14px;
+            padding: 28px 24px;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #1976d2, #42a5f5);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tool-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(25, 118, 210, 0.12);
+            border-color: #bbdefb;
+        }
+        .tool-card:hover::before { transform: scaleX(1); }
+        .tool-card:active { transform: translateY(-2px); }
+
+        .tool-icon-wrap {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            font-size: 1.4rem;
+            transition: transform 0.3s ease;
+        }
+        .tool-card:hover .tool-icon-wrap { transform: scale(1.08); }
+        .tool-icon-wrap.blue { background: #e3f2fd; color: #1976d2; }
+        .tool-icon-wrap.green { background: #e8f5e9; color: #388e3c; }
+        .tool-icon-wrap.purple { background: #ede7f6; color: #7b1fa2; }
+        .tool-icon-wrap.orange { background: #fff3e0; color: #e65100; }
+
+        .tool-name { font-size: 1rem; font-weight: 600; color: #212121; margin-bottom: 6px; letter-spacing: -0.3px; }
+        .tool-desc { font-size: 0.82rem; color: #4E545C; line-height: 1.6; margin-bottom: 16px; flex: 1; }
+        .tool-path {
+            font-size: 0.72rem;
+            color: #80878F;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: #f5f7fa;
+            padding: 5px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            word-break: break-all;
+            transition: background 0.2s;
+        }
+        .tool-card:hover .tool-path { background: #e3f2fd; color: #1565c0; }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 0.75rem;
+            color: #80878F;
+        }
+
+        /* Staggered entrance animation */
+        .tool-card { opacity: 0; transform: translateY(20px); animation: cardEnter 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        .tool-card:nth-child(1) { animation-delay: 0.1s; }
+        .tool-card:nth-child(2) { animation-delay: 0.2s; }
+        .tool-card:nth-child(3) { animation-delay: 0.3s; }
+        .tool-card:nth-child(4) { animation-delay: 0.4s; }
+        @keyframes cardEnter { to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 640px) {
+            .page-header { padding: 32px 16px 28px; }
+            .page-header h1 { font-size: 1.4rem; }
+            .container { padding: 0 14px 32px; margin-top: -24px; }
+            .tools-grid { grid-template-columns: 1fr; gap: 14px; }
+            .tool-card { padding: 22px 18px; }
+            .tool-card:hover { transform: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <div class="logo-mark">
+            <svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="18" fill="rgba(255,255,255,0.15)"/><path d="M10 18c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><circle cx="18" cy="18" r="3" fill="#fff"/></svg>
+            <span>Birdeye Tools</span>
+        </div>
+        <h1>Ambassador Admin Tools</h1>
+        <p class="subtitle">Internal tools for environment operations and API management</p>
+    </div>
+
+    <div class="container">
+        <div class="tools-grid">
+            <a class="tool-card" href="./generic-api-config-tool.html">
+                <div class="tool-icon-wrap blue">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </div>
+                <div class="tool-name">Generic API Config</div>
+                <div class="tool-desc">Configure and upsert generic-api-config across ambassador environments.</div>
+                <span class="tool-path">generic-api-config-tool.html</span>
+            </a>
+
+            <a class="tool-card" href="./ops-tool.html">
+                <div class="tool-icon-wrap green">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
+                <div class="tool-name">Ops Tool</div>
+                <div class="tool-desc">Health checks for Armor and microservice pointings management.</div>
+                <span class="tool-path">ops-tool.html</span>
+            </a>
+
+            <a class="tool-card" href="./developer-portal-tool.html">
+                <div class="tool-icon-wrap purple">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </div>
+                <div class="tool-name">Developer Portal</div>
+                <div class="tool-desc">Upsert developer portal API endpoints across Armor environments with token auth.</div>
+                <span class="tool-path">developer-portal-tool.html</span>
+            </a>
+
+            <a class="tool-card" href="./curl-builder-tool.html">
+                <div class="tool-icon-wrap orange">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                </div>
+                <div class="tool-name">Curl Builder</div>
+                <div class="tool-desc">Paste ambassador log lines, parse into editable curl commands, and execute.</div>
+                <span class="tool-path">curl-builder-tool.html</span>
+            </a>
+        </div>
+        <div class="footer-note">Ambassador Admin Suite &middot; Birdeye Engineering</div>
+    </div>
+</body>
+</html>

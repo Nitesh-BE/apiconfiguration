@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generic API Config Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; background: #f5f7fa; color: #212121; min-height: 100vh; }
+
+        /* Header */
+        .page-header { background: linear-gradient(135deg, #1565c0, #1976d2, #2196f3, #1565c0); background-size: 300% 300%; animation: gradientShift 8s ease infinite; padding: 20px 24px 16px; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* Nav */
+        .tool-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tool-nav a { padding: 7px 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.78rem; font-weight: 500; transition: all 0.25s ease; white-space: nowrap; }
+        .tool-nav a:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .tool-nav a.active { background: #fff; color: #1976d2; border-color: #fff; font-weight: 600; }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 24px; }
+        h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: #212121; letter-spacing: -0.4px; }
+        .subtitle { color: #80878F; font-size: 0.85rem; margin-bottom: 24px; }
+
+        /* Cards */
+        .card { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.3s ease; }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; color: #212121; display: flex; align-items: center; gap: 8px; }
+        .card-title .badge { background: #1976d2; color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+
+        /* Labels & Inputs */
+        label { display: block; font-size: 0.82rem; font-weight: 500; color: #4E545C; margin-bottom: 6px; }
+        input[type="text"], select, textarea { width: 100%; padding: 10px 14px; background: #f9fafb; border: 1px solid #d5dbe3; border-radius: 8px; color: #212121; font-size: 0.875rem; font-family: inherit; transition: all 0.25s ease; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,0.1); background: #fff; }
+        textarea { resize: vertical; min-height: 60px; }
+
+        /* Form layout */
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .form-group { margin-bottom: 16px; }
+
+        /* Env grid */
+        .env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .env-option { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 10px; cursor: pointer; transition: all 0.25s ease; user-select: none; }
+        .env-option:hover { border-color: #bbdefb; background: #f0f7ff; }
+        .env-option.selected { border-color: #1976d2; background: #e3f2fd; box-shadow: 0 0 0 3px rgba(25,118,210,0.08); }
+        .env-option-all { grid-column: 1 / -1; }
+        .env-option input[type="checkbox"] { accent-color: #1976d2; width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+        .env-label { font-size: 0.85rem; font-weight: 600; color: #212121; }
+        .env-url-edit { margin-top: 6px; }
+        .env-url-edit input { font-size: 0.75rem; padding: 7px 10px; background: #fff; border: 1px solid #d5dbe3; border-radius: 6px; color: #4E545C; font-family: 'SF Mono', 'Fira Code', monospace; }
+
+        /* Toggle */
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 10px; margin-bottom: 10px; transition: all 0.2s; }
+        .toggle-row:hover { background: #f0f7ff; }
+        .toggle-row label { margin: 0; font-size: 0.85rem; color: #212121; }
+        .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #d5dbe3; border-radius: 24px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .toggle-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        .toggle input:checked + .toggle-slider { background: #1976d2; }
+        .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+        /* Hints */
+        .hint { font-size: 0.75rem; color: #80878F; margin-top: 6px; line-height: 1.5; }
+        .hint code { background: #e3f2fd; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem; color: #1565c0; }
+        .info-box { background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+        .info-box p { font-size: 0.8rem; color: #1565c0; line-height: 1.6; }
+
+        /* Buttons */
+        .btn { padding: 12px 28px; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-family: inherit; }
+        .btn-primary { background: #1976d2; color: #fff; box-shadow: 0 2px 8px rgba(25,118,210,0.25); }
+        .btn-primary:hover { background: #1565c0; box-shadow: 0 4px 14px rgba(25,118,210,0.35); transform: translateY(-1px); }
+        .btn-primary:disabled { background: #bbdefb; color: #90caf9; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-secondary { background: #f5f7fa; color: #4E545C; border: 1px solid #d5dbe3; }
+        .btn-secondary:hover { background: #e8ecf1; color: #212121; }
+        .btn-group { display: flex; gap: 10px; margin-top: 8px; }
+
+        /* Results */
+        .results-area { margin-top: 20px; }
+        .result-item { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; margin-bottom: 12px; overflow: hidden; animation: fadeSlideIn 0.3s ease; }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .result-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; }
+        .result-header .env-name { font-weight: 600; font-size: 0.85rem; color: #212121; }
+        .result-status { font-size: 0.75rem; padding: 4px 12px; border-radius: 99px; font-weight: 600; }
+        .result-status.success { background: #e8f5e9; color: #2e7d32; }
+        .result-status.error { background: #fce4ec; color: #c62828; }
+        .result-status.pending { background: #fff8e1; color: #f57f17; }
+        .result-body { padding: 0 14px 14px; }
+        .result-body pre { background: #1a2332; padding: 14px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; line-height: 1.7; color: #c8d6e5; white-space: pre-wrap; word-break: break-word; max-height: 300px; overflow-y: auto; }
+
+        /* System chips */
+        .path-prefix-select { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; margin-bottom: 12px; max-height: 240px; overflow-y: auto; padding: 2px; }
+        .prefix-chip { padding: 7px 10px; background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 8px; cursor: pointer; font-size: 0.72rem; font-family: 'SF Mono', 'Fira Code', monospace; transition: all 0.25s ease; text-align: center; user-select: none; }
+        .prefix-chip:hover { border-color: #bbdefb; background: #f0f7ff; }
+        .prefix-chip.active { border-color: #1976d2; background: #e3f2fd; color: #1565c0; box-shadow: 0 0 0 3px rgba(25,118,210,0.08); }
+        .prefix-chip .system-name { display: block; font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; font-size: 0.7rem; color: #80878F; margin-bottom: 2px; }
+        .prefix-chip.active .system-name { color: #1976d2; }
+
+        /* Method chips */
+        .method-chips { display: flex; gap: 8px; }
+        .method-chip { padding: 8px 20px; background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.25s ease; user-select: none; color: #4E545C; }
+        .method-chip:hover { border-color: #bbdefb; }
+        .method-chip.get.active { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
+        .method-chip.post.active { border-color: #ff9800; background: #fff3e0; color: #e65100; }
+        .method-chip.put.active { border-color: #1976d2; background: #e3f2fd; color: #1565c0; }
+        .method-chip.delete.active { border-color: #f44336; background: #fce4ec; color: #c62828; }
+
+        /* Path input */
+        .path-input-row { display: flex; gap: 0; align-items: stretch; }
+        .path-prefix-display { padding: 10px 12px; background: #e3f2fd; border: 1px solid #bbdefb; border-right: none; border-radius: 8px 0 0 8px; font-size: 0.85rem; color: #1565c0; font-family: 'SF Mono', 'Fira Code', monospace; display: flex; align-items: center; white-space: nowrap; min-width: fit-content; font-weight: 500; }
+        .path-input-row input { border-radius: 0 8px 8px 0; }
+
+        /* Curl preview */
+        .curl-preview { background: #1a2332; border: 1px solid #2d3e50; border-radius: 10px; padding: 14px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; line-height: 1.8; color: #c8d6e5; white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow-y: auto; }
+
+        /* Spinner */
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(25,118,210,0.2); border-top-color: #1976d2; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .validation-error { color: #c62828; font-size: 0.75rem; margin-top: 4px; }
+        .hidden { display: none; }
+
+        /* Page entrance */
+        .card { opacity: 0; animation: cardFadeIn 0.4s ease forwards; }
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+        .card:nth-child(5) { animation-delay: 0.25s; }
+        @keyframes cardFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobile */
+        @media (max-width: 640px) {
+            .container { padding: 14px; }
+            h1 { font-size: 1.25rem; }
+            .card { padding: 16px; margin-bottom: 14px; }
+            .env-grid { grid-template-columns: 1fr; gap: 8px; }
+            .env-option { padding: 10px 12px; }
+            .env-url-edit input { font-size: 0.8rem; padding: 8px 10px; }
+            .path-prefix-select { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 4px; max-height: 180px; }
+            .prefix-chip { padding: 8px 6px; font-size: 0.7rem; }
+            .prefix-chip .system-name { font-size: 0.65rem; }
+            .method-chips { flex-wrap: wrap; gap: 6px; }
+            .method-chip { padding: 10px 16px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+            .btn { min-height: 44px; padding: 12px 20px; }
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; }
+            .path-input-row { flex-direction: column; }
+            .path-prefix-display { border-radius: 8px 8px 0 0; border-right: 1px solid #bbdefb; border-bottom: none; justify-content: center; padding: 8px 12px; }
+            .path-input-row input { border-radius: 0 0 8px 8px; }
+            input[type="text"] { font-size: 0.85rem; padding: 10px 12px; }
+            .curl-preview { font-size: 0.75rem; padding: 12px; max-height: 200px; }
+            .tool-nav { gap: 4px; }
+            .tool-nav a { padding: 8px 10px; font-size: 0.72rem; flex: 1; text-align: center; min-height: 38px; display: flex; align-items: center; justify-content: center; }
+            .page-header { padding: 14px 14px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <nav class="tool-nav">
+            <a href="./index.html">All Tools</a>
+            <a href="./generic-api-config-tool.html" class="active">API Config</a>
+            <a href="./ops-tool.html">Ops</a>
+            <a href="./developer-portal-tool.html">Dev Portal</a>
+            <a href="./curl-builder-tool.html">Curl Builder</a>
+        </nav>
+    </div>
+    <div class="container">
+        <h1>Generic API Config Upsert</h1>
+        <p class="subtitle">Configure and execute generic-api-config upsert across environments</p>
+
+        <!-- Environments -->
+        <div class="card">
+            <div class="card-title">Environments <span class="badge">Multi-select</span></div>
+            <div class="env-grid" id="envGrid">
+                <label class="env-option env-option-all" data-env="all">
+                    <input type="checkbox" value="all">
+                    <div style="flex:1;">
+                        <div class="env-label">All</div>
+                        <div class="hint">Demo, QA, Preprod, and EU</div>
+                    </div>
+                </label>
+                <label class="env-option" data-env="demo">
+                    <input type="checkbox" value="demo">
+                    <div style="flex:1;">
+                        <div class="env-label">Demo</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-demo" value="http://dev-ambassador-10.birdeye.internal:8080" onclick="event.stopPropagation()">
+                        </div>
+                    </div>
+                </label>
+                <label class="env-option" data-env="qa">
+                    <input type="checkbox" value="qa">
+                    <div style="flex:1;">
+                        <div class="env-label">QA</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-qa" value="http://qa-ambassador5.birdeye.internal:8080" onclick="event.stopPropagation()">
+                        </div>
+                    </div>
+                </label>
+                <label class="env-option" data-env="preprod">
+                    <input type="checkbox" value="preprod">
+                    <div style="flex:1;">
+                        <div class="env-label">Preprod</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-preprod" value="http://preprod6-ambassador.birdeye.internal:8080" onclick="event.stopPropagation()">
+                        </div>
+                    </div>
+                </label>
+                <label class="env-option" data-env="eu">
+                    <input type="checkbox" value="eu">
+                    <div style="flex:1;">
+                        <div class="env-label">EU</div>
+                        <div class="env-url-edit">
+                            <input type="text" id="env-url-eu" value="http://eucent1-ambassador.birdeye.internal" onclick="event.stopPropagation()">
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- System & Path -->
+        <div class="card">
+            <div class="card-title">API Path Configuration</div>
+            <div class="info-box">
+                <p>If the path contains a dynamic variable, substitute it with <code>*</code><br>
+                Example: <code>/survey/check/123</code> &rarr; <code>/survey/check/*</code></p>
+            </div>
+            <label>Select System <span style="color:#64748b; font-weight:400;">(or use Custom)</span></label>
+            <div class="path-prefix-select" id="systemSelect"></div>
+
+            <label>Path</label>
+            <div class="path-input-row" id="pathRow">
+                <div class="path-prefix-display" id="pathPrefixDisplay">/&mdash;</div>
+                <input type="text" id="pathInput" placeholder="e.g. /v1/landing-pages/library/*/*">
+            </div>
+            <!-- Custom path input (hidden by default, shown when Custom is selected) -->
+            <div class="hidden" id="customPathRow" style="margin-top:8px;">
+                <label>Full Custom Path</label>
+                <input type="text" id="customPathInput" placeholder="e.g. /chainsphere/v1/some-endpoint/*" style="width:100%;">
+            </div>
+            <div class="validation-error hidden" id="pathError"></div>
+            <div class="hint" style="margin-top:8px;">Full path: <code id="fullPathPreview">&mdash;</code></div>
+        </div>
+
+        <!-- Method -->
+        <div class="card">
+            <div class="card-title">HTTP Method</div>
+            <div class="method-chips" id="methodChips">
+                <div class="method-chip get" data-method="GET">GET</div>
+                <div class="method-chip post" data-method="POST">POST</div>
+                <div class="method-chip put" data-method="PUT">PUT</div>
+                <div class="method-chip delete" data-method="DELETE">DELETE</div>
+            </div>
+        </div>
+
+        <!-- Optional Fields -->
+        <div class="card">
+            <div class="card-title">Optional Fields <span class="badge" style="background:#475569;">Include only if needed</span></div>
+
+            <div class="form-group">
+                <div class="toggle-row">
+                    <div>
+                        <label>Include dateCalculation</label>
+                        <div class="hint" style="margin-top:2px;">Toggle ON to include <code>"dateCalculation": true</code> in the request</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="includeDateCalc">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="toggle-row">
+                    <div>
+                        <label>Include businessIdsCalculation</label>
+                        <div class="hint" style="margin-top:2px;">Toggle ON to include <code>"businessIdsCalculation": true</code> in the request</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="includeBusinessCalc">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="toggle-row">
+                    <div>
+                        <label>isKafkaAPI</label>
+                        <div class="hint" style="margin-top:2px;">Toggle ON to include <code>"requestType": "kafka"</code> and <code>"kafkaTopic"</code> in the request</div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="includeKafkaApi">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="hidden" id="kafkaTopicRow" style="margin-top:10px;">
+                    <label>Kafka Topic</label>
+                    <input type="text" id="kafkaTopicInput" placeholder="e.g. ambassador-generic-api-topic">
+                    <div class="validation-error hidden" id="kafkaTopicError"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview & Execute -->
+        <div class="card">
+            <div class="card-title">Request Preview</div>
+            <div class="curl-preview" id="curlPreview">Configure the fields above to see the request preview...</div>
+            <div class="btn-group" style="margin-top:16px;">
+                <button class="btn btn-primary" id="executeBtn" onclick="executeRequests()" disabled>
+                    Execute on Selected Environments
+                </button>
+                <button class="btn btn-secondary" onclick="copyPayload()">Copy Payload</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="results-area hidden" id="resultsArea">
+            <div class="card">
+                <div class="card-title">Execution Results</div>
+                <div id="resultsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ENV_KEYS = ['demo', 'qa', 'preprod', 'eu'];
+        const ENV_NAMES = { demo: 'Demo', qa: 'QA', preprod: 'Preprod', eu: 'EU' };
+        const PROXY_URL = window.location.origin + '/ambassador/admin/tools/proxy';
+        const REQUEST_TIMEOUT_MS = 15000;
+        const originalFetch = window.fetch.bind(window);
+
+        window.fetch = function(resource, options) {
+            options = options || {};
+            if (options.signal) return originalFetch(resource, options);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(function() { controller.abort(); }, REQUEST_TIMEOUT_MS);
+            return originalFetch(resource, Object.assign({}, options, { signal: controller.signal }))
+                .catch(function(err) {
+                    if (err.name === 'AbortError') {
+                        throw new Error('Request timed out after ' + (REQUEST_TIMEOUT_MS / 1000) + 's. If this is hosted on GitHub Pages, Execute will not work because the Node proxy is not running.');
+                    }
+                    throw err;
+                })
+                .finally(function() { clearTimeout(timeoutId); });
+        };
+
+        async function readProxyJson(resp) {
+            const contentType = resp.headers.get('content-type') || '';
+            if (!resp.ok) {
+                throw new Error('Proxy endpoint unavailable (' + resp.status + '). Execute requires server.js; GitHub Pages/static hosting only serves the UI.');
+            }
+            if (contentType.indexOf('application/json') === -1) {
+                await resp.text();
+                throw new Error('Proxy endpoint did not return JSON. Execute requires the Node server.js proxy; GitHub Pages/static hosting cannot execute requests.');
+            }
+            return await resp.json();
+        }
+
+        function getEnvUrl(envKey) {
+            return document.getElementById('env-url-' + envKey).value.trim().replace(/\/$/, '');
+        }
+
+        /**
+         * Smart fetch: for cross-origin calls, routes through the TARGET's own proxy
+         * endpoint so the actual API call happens locally on that server.
+         *
+         * Browser → target:8080/ambassador/admin/tools/proxy → target calls itself
+         *
+         * This works because:
+         * - The CORS filter on the target allows the browser to reach its proxy endpoint
+         * - The proxy then calls the actual API on localhost (always reachable)
+         */
+        async function smartFetch(targetUrl, method, payload, customHeaders) {
+            var targetOrigin = new URL(targetUrl).origin;
+            var isCrossOrigin = window.location.origin !== targetOrigin;
+
+            // Same-origin: call directly, no proxy needed
+            if (!isCrossOrigin) {
+                var resp = await fetch(targetUrl, buildFetchOpts(method, payload, customHeaders));
+                var body = await resp.text();
+                return { status: resp.status, statusText: resp.statusText, body: body, via: 'direct' };
+            }
+
+            // Cross-origin: try target's remote proxy first (works after new code is deployed everywhere)
+            // If CORS blocks it (old code on target), fall back to our own local proxy
+            try {
+                var targetProxyUrl = targetOrigin + '/ambassador/admin/tools/proxy';
+                var reqBody = { targetUrl: targetUrl, method: method || 'POST' };
+                if (payload) reqBody.payload = payload;
+                if (customHeaders) reqBody.headers = customHeaders;
+
+                var resp = await fetch(targetProxyUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reqBody)
+                });
+                var result = await readProxyJson(resp);
+                result.via = 'remote-proxy';
+                return result;
+            } catch (e) {
+                // CORS blocked — target doesn't have new code yet, use our own proxy
+                console.log('[smartFetch] Remote proxy failed, falling back to local proxy for:', targetUrl);
+                var reqBody = { targetUrl: targetUrl, method: method || 'POST' };
+                if (payload) reqBody.payload = payload;
+                if (customHeaders) reqBody.headers = customHeaders;
+
+                var resp = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reqBody)
+                });
+                var result = await readProxyJson(resp);
+                result.via = 'local-proxy';
+                return result;
+            }
+        }
+
+        function buildFetchOpts(method, payload, customHeaders) {
+            var opts = {
+                method: method || 'GET',
+                headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+            };
+            if (customHeaders) {
+                Object.entries(customHeaders).forEach(function(e) { opts.headers[e[0]] = e[1]; });
+            }
+            if (payload && method !== 'GET') {
+                opts.headers['Content-Type'] = 'application/json';
+                opts.body = JSON.stringify(payload);
+            }
+            return opts;
+        }
+
+        const SYSTEMS = [
+            { name: 'TICKZ', prefix: '/ticket' },
+            { name: 'BUSINESS', prefix: '/business' },
+            { name: 'KONTACTO', prefix: '/customer' },
+            { name: 'KONTACTO_DUMMY', prefix: '/feature' },
+            { name: 'MESSENGER', prefix: '/messenger' },
+            { name: 'REVIEWS', prefix: '/review' },
+            { name: 'QUERO', prefix: '/quero' },
+            { name: 'DOUP', prefix: '/doup' },
+            { name: 'CAMPAIGN', prefix: '/campaign' },
+            { name: 'TEAMCHAT', prefix: '/teamchat' },
+            { name: 'PAYMENTS', prefix: '/payments' },
+            { name: 'SURVEY', prefix: '/survey' },
+            { name: 'BIZAPPS', prefix: '/bizapps' },
+            { name: 'SOCIAL', prefix: '/social' },
+            { name: 'LISTING', prefix: '/listing' },
+            { name: 'INTEGRATION', prefix: '/integration' },
+            { name: 'BAM', prefix: '/bam' },
+            { name: 'APPOINTMENTS', prefix: '/appointment' },
+            { name: 'NEXUS', prefix: '/nexus' },
+            { name: 'INSIGHT', prefix: '/insight' },
+            { name: 'SPAM_DETECTION', prefix: '/spam-detection' },
+            { name: 'CHATBOT', prefix: '/chatbot' },
+            { name: 'RAPTOR', prefix: '/raptor' },
+            { name: 'LEAD_GEN', prefix: '/leadgen' },
+            { name: 'AI_AGENT', prefix: '/bird-ai-agent' },
+            { name: 'GEN_AI', prefix: '/gen-ai' },
+            { name: 'COPILOT', prefix: '/copilots' },
+            { name: 'WORKFLOWS', prefix: '/workflows' },
+            { name: 'SYNCSPHERE', prefix: '/syncsphereapi' },
+            { name: 'CUSTOMREPORT', prefix: '/customreport' },
+            { name: 'BIZ_AGENTS', prefix: '/bizapps-ai-agents' },
+            { name: 'CONTENT_HUB', prefix: '/content-hub' }
+        ];
+
+        let selectedSystem = null;
+        let selectedMethod = null;
+        let isCustomPath = false;
+
+        // Build system chips
+        const systemSelect = document.getElementById('systemSelect');
+        SYSTEMS.forEach(sys => {
+            const chip = document.createElement('div');
+            chip.className = 'prefix-chip';
+            chip.dataset.prefix = sys.prefix;
+            chip.innerHTML = '<span class="system-name">' + sys.name + '</span>' + sys.prefix;
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.prefix-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                selectedSystem = sys;
+                isCustomPath = false;
+                document.getElementById('pathPrefixDisplay').textContent = sys.prefix;
+                document.getElementById('pathRow').classList.remove('hidden');
+                document.getElementById('customPathRow').classList.add('hidden');
+                updatePreview();
+            });
+            systemSelect.appendChild(chip);
+        });
+
+        // Add "Custom" chip at the end
+        (function() {
+            var customChip = document.createElement('div');
+            customChip.className = 'prefix-chip';
+            customChip.style.borderStyle = 'dashed';
+            customChip.innerHTML = '<span class="system-name">CUSTOM</span>type your own';
+            customChip.addEventListener('click', function() {
+                document.querySelectorAll('.prefix-chip').forEach(function(c) { c.classList.remove('active'); });
+                customChip.classList.add('active');
+                selectedSystem = { name: 'CUSTOM', prefix: '' };
+                isCustomPath = true;
+                document.getElementById('pathRow').classList.add('hidden');
+                document.getElementById('customPathRow').classList.remove('hidden');
+                document.getElementById('customPathInput').focus();
+                updatePreview();
+            });
+            systemSelect.appendChild(customChip);
+        })();
+
+        document.getElementById('customPathInput').addEventListener('input', updatePreview);
+
+        function syncAllEnvSelection() {
+            const allCheckbox = document.querySelector('.env-option[data-env="all"] input[type="checkbox"]');
+            const allSelected = ENV_KEYS.every(env => {
+                const cb = document.querySelector('.env-option[data-env="' + env + '"] input[type="checkbox"]');
+                return cb && cb.checked;
+            });
+            allCheckbox.checked = allSelected;
+            allCheckbox.closest('.env-option').classList.toggle('selected', allSelected);
+        }
+
+        function setConcreteEnvSelection(checked) {
+            ENV_KEYS.forEach(env => {
+                const cb = document.querySelector('.env-option[data-env="' + env + '"] input[type="checkbox"]');
+                if (!cb) return;
+                cb.checked = checked;
+                cb.closest('.env-option').classList.toggle('selected', checked);
+            });
+        }
+
+        // Env checkboxes
+        document.querySelectorAll('.env-option').forEach(opt => {
+            const cb = opt.querySelector('input[type="checkbox"]');
+            cb.addEventListener('change', () => {
+                if (cb.value === 'all') {
+                    setConcreteEnvSelection(cb.checked);
+                } else {
+                    syncAllEnvSelection();
+                }
+                opt.classList.toggle('selected', cb.checked);
+                updatePreview();
+            });
+            opt.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    cb.checked = !cb.checked;
+                    cb.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+
+        // Method chips
+        document.querySelectorAll('.method-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.method-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                selectedMethod = chip.dataset.method;
+                updatePreview();
+            });
+        });
+
+        // Path input
+        document.getElementById('pathInput').addEventListener('input', updatePreview);
+        document.getElementById('includeDateCalc').addEventListener('change', updatePreview);
+        document.getElementById('includeBusinessCalc').addEventListener('change', updatePreview);
+        document.getElementById('includeKafkaApi').addEventListener('change', () => {
+            toggleKafkaTopicInput();
+            updatePreview();
+            if (document.getElementById('includeKafkaApi').checked) {
+                document.getElementById('kafkaTopicInput').focus();
+            }
+        });
+        document.getElementById('kafkaTopicInput').addEventListener('input', updatePreview);
+
+        function toggleKafkaTopicInput() {
+            const kafkaEnabled = document.getElementById('includeKafkaApi').checked;
+            document.getElementById('kafkaTopicRow').classList.toggle('hidden', !kafkaEnabled);
+        }
+
+        function getFullPath() {
+            if (isCustomPath) {
+                var custom = document.getElementById('customPathInput').value.trim();
+                if (custom && !custom.startsWith('/')) custom = '/' + custom;
+                return custom;
+            }
+            if (!selectedSystem) return '';
+            const suffix = document.getElementById('pathInput').value.trim();
+            return selectedSystem.prefix + (suffix.startsWith('/') ? '' : '') + suffix;
+        }
+
+        function buildPayload() {
+            const fullPath = getFullPath();
+            const metaData = {
+                permissions: [''],
+                op: 'IN',
+                ignorePermissions: true
+            };
+            if (document.getElementById('includeDateCalc').checked) {
+                metaData.dateCalculation = "true";
+            }
+            if (document.getElementById('includeBusinessCalc').checked) {
+                metaData.businessIdsCalculation = "true";
+            }
+            if (document.getElementById('includeKafkaApi').checked) {
+                metaData.requestType = "kafka";
+                metaData.kafkaTopic = document.getElementById('kafkaTopicInput').value.trim();
+            }
+            return {
+                path: fullPath,
+                method: selectedMethod,
+                metaData
+            };
+        }
+
+        function getSelectedEnvs() {
+            const envs = [];
+            ENV_KEYS.forEach(env => {
+                const cb = document.querySelector('.env-option[data-env="' + env + '"] input[type="checkbox"]');
+                if (cb && cb.checked) envs.push(env);
+            });
+            return envs;
+        }
+
+        function updatePreview() {
+            const preview = document.getElementById('curlPreview');
+            const fullPathEl = document.getElementById('fullPathPreview');
+            const executeBtn = document.getElementById('executeBtn');
+            const pathError = document.getElementById('pathError');
+            const kafkaTopicError = document.getElementById('kafkaTopicError');
+
+            const fullPath = getFullPath();
+            fullPathEl.textContent = fullPath || '\u2014';
+
+            // Validate
+            pathError.classList.add('hidden');
+            if (!isCustomPath && document.getElementById('pathInput').value.trim() && selectedSystem) {
+                const validPrefix = SYSTEMS.some(s => fullPath.startsWith(s.prefix));
+                if (!validPrefix) {
+                    pathError.textContent = 'Path must start with a valid system prefix.';
+                    pathError.classList.remove('hidden');
+                }
+            }
+
+            const kafkaEnabled = document.getElementById('includeKafkaApi').checked;
+            const kafkaTopic = document.getElementById('kafkaTopicInput').value.trim();
+            kafkaTopicError.classList.add('hidden');
+            if (kafkaEnabled && !kafkaTopic) {
+                kafkaTopicError.textContent = 'Kafka topic is required when isKafkaAPI is enabled.';
+                kafkaTopicError.classList.remove('hidden');
+            }
+
+            const envs = getSelectedEnvs();
+            const canExecute = envs.length > 0 && (selectedSystem || isCustomPath) && selectedMethod && fullPath && (!kafkaEnabled || kafkaTopic);
+            executeBtn.disabled = !canExecute;
+
+            if (!canExecute) {
+                preview.textContent = 'Configure all required fields to see the request preview...';
+                return;
+            }
+
+            const payload = buildPayload();
+            const envLabel = envs.map(e => ENV_NAMES[e]).join(', ');
+            const curlLines = "curl --location '{{ENV_URL}}/ambassador/admin/upsert/generic-api-config' \\\n" +
+                "--header 'Accept: application/json' \\\n" +
+                "--header 'Cache-Control: no-cache' \\\n" +
+                "--header 'Connection: keep-alive' \\\n" +
+                "--header 'Content-Type: application/json' \\\n" +
+                "--data '" + JSON.stringify(payload, null, 4) + "'\n\n" +
+                "Environments: " + envLabel;
+            preview.textContent = curlLines;
+        }
+
+        function copyPayload() {
+            const payload = buildPayload();
+            navigator.clipboard.writeText(JSON.stringify(payload, null, 2)).then(() => {
+                const btn = document.querySelector('.btn-secondary');
+                const orig = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = orig, 1500);
+            });
+        }
+
+        async function executeRequests() {
+            const envs = getSelectedEnvs();
+            if (envs.length === 0) return;
+
+            const payload = buildPayload();
+            const resultsArea = document.getElementById('resultsArea');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const executeBtn = document.getElementById('executeBtn');
+
+            resultsArea.classList.remove('hidden');
+            resultsContainer.innerHTML = '';
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<span class="spinner"></span>Executing...';
+
+            const results = await Promise.allSettled(envs.map(async (env) => {
+                const url = getEnvUrl(env) + '/ambassador/admin/upsert/generic-api-config';
+                const id = 'result-' + env;
+
+                // Show pending
+                resultsContainer.innerHTML += '<div class="result-item" id="' + id + '">' +
+                    '<div class="result-header">' +
+                    '<span class="env-name">' + ENV_NAMES[env] + '</span>' +
+                    '<span class="result-status pending"><span class="spinner"></span>Executing</span>' +
+                    '</div>' +
+                    '<div class="result-body"><pre>Sending request to ' + url + '...</pre></div>' +
+                    '</div>';
+
+                try {
+                    var data = await smartFetch(url, 'POST', payload);
+                    const el = document.getElementById(id);
+                    if (data.error) {
+                        el.querySelector('.result-status').className = 'result-status error';
+                        el.querySelector('.result-status').textContent = 'Failed';
+                        el.querySelector('pre').textContent = 'Error: ' + data.error;
+                        return { env, error: data.error };
+                    }
+                    let body;
+                    try { body = JSON.stringify(JSON.parse(data.body), null, 2); } catch(e) { body = data.body; }
+                    const isOk = data.status >= 200 && data.status < 300;
+                    el.querySelector('.result-status').className = 'result-status ' + (isOk ? 'success' : 'error');
+                    el.querySelector('.result-status').textContent = data.status + ' ' + data.statusText;
+                    el.querySelector('pre').textContent = body + (data.via ? '\n\n[via ' + data.via + ']' : '');
+                    return { env, status: data.status, body };
+                } catch (err) {
+                    const el = document.getElementById(id);
+                    el.querySelector('.result-status').className = 'result-status error';
+                    el.querySelector('.result-status').textContent = 'Failed';
+                    el.querySelector('pre').textContent = 'Error: ' + err.message;
+                    return { env, error: err.message };
+                }
+            }));
+
+            executeBtn.disabled = false;
+            executeBtn.innerHTML = 'Execute on Selected Environments';
+        }
+
+        // Initial state
+        updatePreview();
+    </script>
+</body>
+</html>

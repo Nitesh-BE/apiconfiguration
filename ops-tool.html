@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambassador Ops Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; background: #f5f7fa; color: #212121; min-height: 100vh; }
+        .page-header { background: linear-gradient(135deg, #1565c0, #1976d2, #2196f3, #1565c0); background-size: 300% 300%; animation: gradientShift 8s ease infinite; padding: 20px 24px 16px; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .tool-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tool-nav a { padding: 7px 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.78rem; font-weight: 500; transition: all 0.25s ease; white-space: nowrap; }
+        .tool-nav a:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .tool-nav a.active { background: #fff; color: #1976d2; border-color: #fff; font-weight: 600; }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+        h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: #212121; letter-spacing: -0.4px; }
+        .subtitle { color: #80878F; font-size: 0.85rem; margin-bottom: 24px; }
+        .card { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.3s ease; opacity: 0; animation: cardFadeIn 0.4s ease forwards; }
+        .card:nth-child(1) { animation-delay: 0.05s; } .card:nth-child(2) { animation-delay: 0.1s; } .card:nth-child(3) { animation-delay: 0.15s; }
+        @keyframes cardFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; color: #212121; display: flex; align-items: center; gap: 8px; }
+        .card-title .badge { background: #1976d2; color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+        .card-title .badge-green { background: #4caf50; }
+        .card-title .badge-amber { background: #ff9800; }
+        label { display: block; font-size: 0.82rem; font-weight: 500; color: #4E545C; margin-bottom: 6px; }
+        input[type="text"] { width: 100%; padding: 10px 14px; background: #f9fafb; border: 1px solid #d5dbe3; border-radius: 8px; color: #212121; font-size: 0.85rem; font-family: 'SF Mono', 'Fira Code', monospace; transition: all 0.25s ease; }
+        input:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,0.1); background: #fff; }
+        .env-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .env-label { min-width: 70px; font-size: 0.82rem; font-weight: 600; color: #4E545C; }
+        .env-row input { flex: 1; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); font-family: inherit; white-space: nowrap; }
+        .btn-primary { background: #1976d2; color: #fff; box-shadow: 0 2px 8px rgba(25,118,210,0.25); }
+        .btn-primary:hover { background: #1565c0; box-shadow: 0 4px 14px rgba(25,118,210,0.35); transform: translateY(-1px); }
+        .btn-green { background: #4caf50; color: #fff; box-shadow: 0 2px 8px rgba(76,175,80,0.25); }
+        .btn-green:hover { background: #388e3c; box-shadow: 0 4px 14px rgba(76,175,80,0.35); transform: translateY(-1px); }
+        .btn-amber { background: #ff9800; color: #fff; box-shadow: 0 2px 8px rgba(255,152,0,0.25); }
+        .btn-amber:hover { background: #e65100; box-shadow: 0 4px 14px rgba(255,152,0,0.35); transform: translateY(-1px); }
+        .btn-sm { padding: 8px 14px; font-size: 0.8rem; }
+        .btn-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .result-block { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; margin-top: 12px; overflow: hidden; animation: fadeSlideIn 0.3s ease; }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .result-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #e8ecf1; }
+        .result-header .env-name { font-weight: 600; font-size: 0.85rem; color: #212121; }
+        .result-status { font-size: 0.75rem; padding: 4px 12px; border-radius: 99px; font-weight: 600; }
+        .result-status.success { background: #e8f5e9; color: #2e7d32; }
+        .result-status.error { background: #fce4ec; color: #c62828; }
+        .result-status.pending { background: #fff8e1; color: #f57f17; }
+        .result-body { padding: 12px 14px; }
+        .result-body pre { background: #1a2332; padding: 14px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; line-height: 1.7; color: #c8d6e5; white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(25,118,210,0.2); border-top-color: #1976d2; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .form-group { margin-bottom: 16px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .hint { font-size: 0.75rem; color: #80878F; margin-top: 6px; line-height: 1.5; }
+        .hint code { background: #e3f2fd; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem; color: #1565c0; }
+        .info-box { background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+        .info-box p { font-size: 0.8rem; color: #1565c0; line-height: 1.6; }
+        .tab-bar { display: flex; gap: 4px; margin-bottom: 20px; background: #f0f2f5; border-radius: 12px; padding: 4px; border: 1px solid #e8ecf1; }
+        .tab { padding: 10px 24px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #80878F; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); user-select: none; text-align: center; flex: 1; }
+        .tab:hover { color: #212121; }
+        .tab.active { background: #1976d2; color: #fff; box-shadow: 0 2px 8px rgba(25,118,210,0.25); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .pointing-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .pointing-table th { text-align: left; padding: 10px 12px; font-size: 0.75rem; color: #80878F; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid #e8ecf1; }
+        .pointing-table td { padding: 10px 12px; font-size: 0.8rem; color: #212121; border-bottom: 1px solid #f0f2f5; font-family: 'SF Mono', 'Fira Code', monospace; }
+        .pointing-table tr:hover td { background: #f0f7ff; }
+        @media (max-width: 640px) {
+            .container { padding: 14px; }
+            h1 { font-size: 1.25rem; }
+            .card { padding: 16px; }
+            .env-row { flex-direction: column; align-items: stretch; gap: 6px; }
+            .env-row .env-label { min-width: unset; }
+            .env-row .btn { width: 100%; min-height: 44px; }
+            .form-row { grid-template-columns: 1fr; }
+            .btn { min-height: 44px; }
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; }
+            .tab-bar { flex-direction: row; padding: 3px; }
+            .tab { padding: 10px 12px; font-size: 0.8rem; }
+            .pointing-table { min-width: 480px; }
+            .tool-nav { gap: 4px; }
+            .tool-nav a { padding: 8px 10px; font-size: 0.72rem; flex: 1; text-align: center; min-height: 38px; display: flex; align-items: center; justify-content: center; }
+            .page-header { padding: 14px 14px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <nav class="tool-nav">
+            <a href="./index.html">All Tools</a>
+            <a href="./generic-api-config-tool.html">API Config</a>
+            <a href="./ops-tool.html" class="active">Ops</a>
+            <a href="./developer-portal-tool.html">Dev Portal</a>
+            <a href="./curl-builder-tool.html">Curl Builder</a>
+        </nav>
+    </div>
+    <div class="container">
+        <h1>Ambassador Ops Tool</h1>
+        <p class="subtitle">Health checks, pointings management, and environment operations</p>
+
+        <div class="tab-bar">
+            <div class="tab active" onclick="switchTab('health')">Health Check</div>
+            <div class="tab" onclick="switchTab('pointings')">Pointings</div>
+        </div>
+
+        <!-- ==================== HEALTH CHECK TAB ==================== -->
+        <div class="tab-content active" id="tab-health">
+            <div class="card">
+                <div class="card-title">Armor Health Check <span class="badge badge-green">GET</span></div>
+                <div class="info-box">
+                    <p>Edit the URLs below if needed (e.g. change the instance number), then hit Check.</p>
+                </div>
+
+                <div class="env-row">
+                    <span class="env-label">Demo</span>
+                    <input type="text" id="hc-demo" value="http://dev-armor22.birdeye.internal:8080/health/check">
+                    <button class="btn btn-green btn-sm" onclick="runHealthCheck('hc-demo')">Check</button>
+                </div>
+                <div class="env-row">
+                    <span class="env-label">Preprod</span>
+                    <input type="text" id="hc-preprod" value="http://preprod6-armor.birdeye.internal:8080/health/check">
+                    <button class="btn btn-green btn-sm" onclick="runHealthCheck('hc-preprod')">Check</button>
+                </div>
+                <div class="env-row">
+                    <span class="env-label">QA</span>
+                    <input type="text" id="hc-qa" value="http://qa-armor5.birdeye.internal:8080/health/check">
+                    <button class="btn btn-green btn-sm" onclick="runHealthCheck('hc-qa')">Check</button>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="runAllHealthChecks()">Check All</button>
+                </div>
+
+                <div id="hc-results"></div>
+            </div>
+        </div>
+
+        <!-- ==================== POINTINGS TAB ==================== -->
+        <div class="tab-content" id="tab-pointings">
+
+            <!-- Ambassador Base URLs -->
+            <div class="card">
+                <div class="card-title">Ambassador Environment URLs <span class="badge">Editable</span></div>
+                <div class="info-box">
+                    <p>Edit the base URLs below to target a specific ambassador instance (e.g. change the number).</p>
+                </div>
+                <div class="env-row">
+                    <span class="env-label">Demo</span>
+                    <input type="text" id="amb-demo" value="http://dev-ambassador-10.birdeye.internal:8080">
+                </div>
+                <div class="env-row">
+                    <span class="env-label">QA</span>
+                    <input type="text" id="amb-qa" value="http://qa-ambassador5.birdeye.internal:8080">
+                </div>
+            </div>
+
+            <!-- GET Pointings -->
+            <div class="card">
+                <div class="card-title">View Current Pointings <span class="badge badge-green">GET</span></div>
+                <div class="hint" style="margin-bottom:12px;">Fetches <code>/ambassador/admin/list-microservice-endpoint</code> from the selected environment.</div>
+                <div class="btn-group" style="margin-top:0;">
+                    <button class="btn btn-green btn-sm" onclick="getPointings('amb-demo', 'Demo')">Get Demo Pointings</button>
+                    <button class="btn btn-green btn-sm" onclick="getPointings('amb-qa', 'QA')">Get QA Pointings</button>
+                </div>
+                <div id="get-pointings-results"></div>
+            </div>
+
+            <!-- UPDATE Pointings -->
+            <div class="card">
+                <div class="card-title">Update Pointing <span class="badge badge-amber">POST</span></div>
+                <div class="info-box">
+                    <p>Update a microservice endpoint pointing. After update, the current pointings list will be fetched automatically.</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>System</label>
+                        <input type="text" id="update-system" placeholder="e.g. Business, Listing, Review...">
+                    </div>
+                    <div class="form-group">
+                        <label>URL</label>
+                        <input type="text" id="update-url" placeholder="e.g. http://dev-paid-core-business-api-5.birdeye.internal:8080">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Target Environment</label>
+                    <div class="btn-group" style="margin-top:4px;">
+                        <button class="btn btn-amber btn-sm" onclick="updatePointing('amb-demo', 'Demo')">Update on Demo</button>
+                        <button class="btn btn-amber btn-sm" onclick="updatePointing('amb-qa', 'QA')">Update on QA</button>
+                    </div>
+                </div>
+
+                <div id="update-pointings-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PROXY_URL = window.location.origin + '/ambassador/admin/tools/proxy';
+        const REQUEST_TIMEOUT_MS = 15000;
+        const originalFetch = window.fetch.bind(window);
+
+        window.fetch = function(resource, options) {
+            options = options || {};
+            if (options.signal) return originalFetch(resource, options);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(function() { controller.abort(); }, REQUEST_TIMEOUT_MS);
+            return originalFetch(resource, Object.assign({}, options, { signal: controller.signal }))
+                .catch(function(err) {
+                    if (err.name === 'AbortError') {
+                        throw new Error('Request timed out after ' + (REQUEST_TIMEOUT_MS / 1000) + 's. If this is hosted on GitHub Pages, Execute will not work because the Node proxy is not running.');
+                    }
+                    throw err;
+                })
+                .finally(function() { clearTimeout(timeoutId); });
+        };
+
+        async function readProxyJson(resp) {
+            const contentType = resp.headers.get('content-type') || '';
+            if (!resp.ok) {
+                throw new Error('Proxy endpoint unavailable (' + resp.status + '). Execute requires server.js; GitHub Pages/static hosting only serves the UI.');
+            }
+            if (contentType.indexOf('application/json') === -1) {
+                await resp.text();
+                throw new Error('Proxy endpoint did not return JSON. Execute requires the Node server.js proxy; GitHub Pages/static hosting cannot execute requests.');
+            }
+            return await resp.json();
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector('.tab-content#tab-' + tab).classList.add('active');
+            // find the tab button by matching text
+            document.querySelectorAll('.tab').forEach(t => {
+                if ((tab === 'health' && t.textContent === 'Health Check') ||
+                    (tab === 'pointings' && t.textContent === 'Pointings')) {
+                    t.classList.add('active');
+                }
+            });
+        }
+
+        // ==================== FETCH HELPERS ====================
+        // proxyFetch: calls OUR OWN server's proxy (for Armor health checks - same env)
+        async function proxyFetch(targetUrl, method, payload) {
+            var reqBody = { targetUrl: targetUrl, method: method || 'GET' };
+            if (payload) reqBody.payload = payload;
+            var resp = await fetch(PROXY_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+            return await readProxyJson(resp);
+        }
+
+        // smartFetch: for ambassador endpoints — routes through TARGET's own proxy
+        async function smartFetch(targetUrl, method, payload) {
+            var targetOrigin = new URL(targetUrl).origin;
+            var isCrossOrigin = window.location.origin !== targetOrigin;
+
+            if (!isCrossOrigin) {
+                var opts = {
+                    method: method || 'GET',
+                    headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+                };
+                if (payload && method !== 'GET') {
+                    opts.headers['Content-Type'] = 'application/json';
+                    opts.body = JSON.stringify(payload);
+                }
+                var resp = await fetch(targetUrl, opts);
+                var body = await resp.text();
+                return { status: resp.status, statusText: resp.statusText, body: body };
+            }
+
+            // Cross-origin: try target's remote proxy, fall back to local proxy
+            try {
+                var targetProxyUrl = targetOrigin + '/ambassador/admin/tools/proxy';
+                var reqBody = { targetUrl: targetUrl, method: method || 'GET' };
+                if (payload) reqBody.payload = payload;
+                var resp = await fetch(targetProxyUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reqBody)
+                });
+                return await readProxyJson(resp);
+            } catch (e) {
+                console.log('[smartFetch] Remote proxy failed, falling back to local proxy for:', targetUrl);
+                var reqBody = { targetUrl: targetUrl, method: method || 'GET' };
+                if (payload) reqBody.payload = payload;
+                var resp = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reqBody)
+                });
+                return await readProxyJson(resp);
+            }
+        }
+
+        function renderResult(container, envName, data) {
+            const isOk = data.status && data.status >= 200 && data.status < 300;
+            const statusClass = data.error ? 'error' : (isOk ? 'success' : 'error');
+            const statusText = data.error ? 'Failed' : (data.status + ' ' + data.statusText);
+            let bodyText = data.error || data.body || '';
+            try { bodyText = JSON.stringify(JSON.parse(bodyText), null, 2); } catch(e) {}
+
+            const div = document.createElement('div');
+            div.className = 'result-block';
+            div.innerHTML =
+                '<div class="result-header">' +
+                    '<span class="env-name">' + envName + '</span>' +
+                    '<span class="result-status ' + statusClass + '">' + statusText + '</span>' +
+                '</div>' +
+                '<div class="result-body"><pre>' + escapeHtml(bodyText) + '</pre></div>';
+            container.appendChild(div);
+        }
+
+        function renderPointingsTable(container, envName, data) {
+            const isOk = data.status && data.status >= 200 && data.status < 300;
+            if (!isOk || data.error) {
+                renderResult(container, envName + ' - Pointings List', data);
+                return;
+            }
+            let entries;
+            try { entries = JSON.parse(data.body); } catch(e) {
+                renderResult(container, envName + ' - Pointings List', data);
+                return;
+            }
+
+            const keys = Object.keys(entries).sort();
+            let rows = '';
+            keys.forEach(function(k) {
+                rows += '<tr><td>' + escapeHtml(k) + '</td><td>' + escapeHtml(entries[k]) + '</td></tr>';
+            });
+
+            const div = document.createElement('div');
+            div.className = 'result-block';
+            div.innerHTML =
+                '<div class="result-header">' +
+                    '<span class="env-name">' + envName + ' - Pointings (' + keys.length + ' entries)</span>' +
+                    '<span class="result-status success">200 OK</span>' +
+                '</div>' +
+                '<div class="result-body"><div class="table-scroll">' +
+                    '<table class="pointing-table">' +
+                        '<thead><tr><th>System</th><th>Endpoint URL</th></tr></thead>' +
+                        '<tbody>' + rows + '</tbody>' +
+                    '</table></div>' +
+                '</div>';
+            container.appendChild(div);
+        }
+
+        function showPending(container, envName) {
+            const div = document.createElement('div');
+            div.className = 'result-block';
+            div.id = 'pending-' + envName.replace(/\s/g, '-');
+            div.innerHTML =
+                '<div class="result-header">' +
+                    '<span class="env-name">' + envName + '</span>' +
+                    '<span class="result-status pending"><span class="spinner"></span>Executing</span>' +
+                '</div>';
+            container.appendChild(div);
+            return div;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        // ==================== HEALTH CHECK ====================
+        async function runHealthCheck(inputId) {
+            const url = document.getElementById(inputId).value.trim();
+            if (!url) return;
+            const envName = inputId.replace('hc-', '').toUpperCase();
+            const container = document.getElementById('hc-results');
+            const pending = showPending(container, envName);
+
+            const data = await proxyFetch(url, 'GET');
+            pending.remove();
+            renderResult(container, envName, data);
+        }
+
+        async function runAllHealthChecks() {
+            document.getElementById('hc-results').innerHTML = '';
+            await Promise.allSettled([
+                runHealthCheck('hc-demo'),
+                runHealthCheck('hc-preprod'),
+                runHealthCheck('hc-qa')
+            ]);
+        }
+
+        // ==================== GET POINTINGS (direct browser call) ====================
+        async function getPointings(inputId, envName) {
+            const baseUrl = document.getElementById(inputId).value.trim().replace(/\/$/, '');
+            if (!baseUrl) return;
+            const url = baseUrl + '/ambassador/admin/list-microservice-endpoint';
+            const container = document.getElementById('get-pointings-results');
+            container.innerHTML = '';
+            const pending = showPending(container, envName);
+
+            const data = await smartFetch(url, 'GET');
+            pending.remove();
+            renderPointingsTable(container, envName, data);
+        }
+
+        // ==================== UPDATE POINTINGS (direct browser call) ====================
+        async function updatePointing(inputId, envName) {
+            const system = document.getElementById('update-system').value.trim();
+            const endpointUrl = document.getElementById('update-url').value.trim();
+            if (!system || !endpointUrl) {
+                alert('Please fill in both System and URL fields.');
+                return;
+            }
+
+            const baseUrl = document.getElementById(inputId).value.trim().replace(/\/$/, '');
+            if (!baseUrl) return;
+
+            const updateUrl = baseUrl + '/ambassador/admin/update-microservice-endpoint';
+            const listUrl = baseUrl + '/ambassador/admin/list-microservice-endpoint';
+            const payload = { system: system, url: endpointUrl };
+
+            const container = document.getElementById('update-pointings-results');
+            container.innerHTML = '';
+
+            // Step 1: Update
+            var pending = showPending(container, envName + ' - Update');
+            const updateData = await smartFetch(updateUrl, 'POST', payload);
+            pending.remove();
+            renderResult(container, envName + ' - Update (' + system + ' \u2192 ' + endpointUrl + ')', updateData);
+
+            // Step 2: Fetch updated list
+            pending = showPending(container, envName + ' - Refreshed List');
+            const listData = await directFetch(listUrl, 'GET');
+            pending.remove();
+            renderPointingsTable(container, envName, listData);
+        }
+    </script>
+</body>
+</html>

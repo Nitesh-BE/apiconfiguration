@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curl Builder Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; background: #f5f7fa; color: #212121; min-height: 100vh; }
+        .page-header { background: linear-gradient(135deg, #1565c0, #1976d2, #2196f3, #1565c0); background-size: 300% 300%; animation: gradientShift 8s ease infinite; padding: 20px 24px 16px; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .tool-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+        .tool-nav a { padding: 7px 14px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.78rem; font-weight: 500; transition: all 0.25s ease; white-space: nowrap; }
+        .tool-nav a:hover { background: rgba(255,255,255,0.2); color: #fff; }
+        .tool-nav a.active { background: #fff; color: #1976d2; border-color: #fff; font-weight: 600; }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+        h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: #212121; letter-spacing: -0.4px; }
+        .subtitle { color: #80878F; font-size: 0.85rem; margin-bottom: 24px; }
+        .card { background: #fff; border: 1px solid #e8ecf1; border-radius: 14px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.3s ease; opacity: 0; animation: cardFadeIn 0.4s ease forwards; }
+        .card:nth-child(1) { animation-delay: 0.05s; } .card:nth-child(2) { animation-delay: 0.1s; }
+        @keyframes cardFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+        .card-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; color: #212121; display: flex; align-items: center; gap: 8px; }
+        .card-title .badge { color: #fff; font-size: 0.65rem; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+        .badge-blue { background: #1976d2; }
+        .badge-green { background: #4caf50; }
+        .badge-amber { background: #ff9800; }
+        .badge-red { background: #f44336; }
+        label { display: block; font-size: 0.82rem; font-weight: 500; color: #4E545C; margin-bottom: 6px; }
+        input[type="text"] { width: 100%; padding: 10px 14px; background: #f9fafb; border: 1px solid #d5dbe3; border-radius: 8px; color: #212121; font-size: 0.85rem; font-family: 'SF Mono', 'Fira Code', monospace; transition: all 0.25s ease; }
+        input:focus, textarea:focus { outline: none; border-color: #1976d2; box-shadow: 0 0 0 3px rgba(25,118,210,0.1); background: #fff; }
+        textarea { width: 100%; padding: 12px 14px; background: #f9fafb; border: 1px solid #d5dbe3; border-radius: 8px; color: #212121; font-size: 0.82rem; font-family: 'SF Mono', 'Fira Code', monospace; resize: vertical; line-height: 1.6; transition: all 0.25s ease; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); font-family: inherit; white-space: nowrap; }
+        .btn-primary { background: #1976d2; color: #fff; box-shadow: 0 2px 8px rgba(25,118,210,0.25); }
+        .btn-primary:hover { background: #1565c0; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(25,118,210,0.35); }
+        .btn-primary:disabled { background: #bbdefb; color: #90caf9; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn-green { background: #4caf50; color: #fff; box-shadow: 0 2px 8px rgba(76,175,80,0.25); }
+        .btn-green:hover { background: #388e3c; transform: translateY(-1px); }
+        .btn-sm { padding: 7px 14px; font-size: 0.78rem; }
+        .btn-outline { background: transparent; border: 1px solid #d5dbe3; color: #4E545C; }
+        .btn-outline:hover { border-color: #1976d2; color: #1976d2; }
+        .btn-danger-outline { background: transparent; border: 1px solid #d5dbe3; color: #c62828; }
+        .btn-danger-outline:hover { border-color: #f44336; background: #fce4ec; }
+        .btn-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .form-group { margin-bottom: 16px; }
+        .info-box { background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+        .info-box p { font-size: 0.8rem; color: #1565c0; line-height: 1.6; }
+        .info-box code { background: #bbdefb; padding: 1px 6px; border-radius: 4px; font-size: 0.72rem; color: #0d47a1; }
+        .hint { font-size: 0.75rem; color: #80878F; margin-top: 6px; line-height: 1.5; }
+        .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { padding: 8px 20px; background: #f9fafb; border: 1px solid #e8ecf1; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.25s ease; user-select: none; color: #4E545C; }
+        .chip:hover { border-color: #bbdefb; }
+        .chip.get.active { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
+        .chip.post.active { border-color: #ff9800; background: #fff3e0; color: #e65100; }
+        .chip.put.active { border-color: #1976d2; background: #e3f2fd; color: #1565c0; }
+        .chip.delete.active { border-color: #f44336; background: #fce4ec; color: #c62828; }
+        .headers-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .headers-table { width: 100%; border-collapse: collapse; }
+        .headers-table th { text-align: left; padding: 8px 10px; font-size: 0.72rem; color: #80878F; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid #e8ecf1; }
+        .headers-table td { padding: 4px 4px; }
+        .headers-table input { font-size: 0.78rem; padding: 8px 10px; }
+        .headers-table .key-col { width: 35%; }
+        .headers-table .val-col { width: 55%; }
+        .headers-table .act-col { width: 10%; text-align: center; }
+        .headers-table .remove-btn { cursor: pointer; color: #80878F; font-size: 1.1rem; background: none; border: none; padding: 4px 8px; border-radius: 4px; transition: all 0.2s; }
+        .headers-table .remove-btn:hover { color: #c62828; background: #fce4ec; }
+        .curl-preview { background: #1a2332; border: 1px solid #2d3e50; border-radius: 10px; padding: 14px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.78rem; line-height: 1.8; color: #c8d6e5; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; }
+        .result-block { background: #fff; border: 1px solid #e8ecf1; border-radius: 10px; margin-top: 12px; overflow: hidden; animation: fadeSlideIn 0.3s ease; }
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .result-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #e8ecf1; }
+        .result-header .label { font-weight: 600; font-size: 0.85rem; color: #212121; }
+        .result-status { font-size: 0.75rem; padding: 4px 12px; border-radius: 99px; font-weight: 600; }
+        .result-status.success { background: #e8f5e9; color: #2e7d32; }
+        .result-status.error { background: #fce4ec; color: #c62828; }
+        .result-status.pending { background: #fff8e1; color: #f57f17; }
+        .result-body { padding: 12px 14px; }
+        .result-body pre { background: #1a2332; padding: 14px; border-radius: 8px; font-size: 0.78rem; overflow-x: auto; line-height: 1.7; color: #c8d6e5; white-space: pre-wrap; word-break: break-word; max-height: 500px; overflow-y: auto; font-family: 'SF Mono', 'Fira Code', monospace; }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(25,118,210,0.2); border-top-color: #1976d2; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
+        .parse-success { background: #e8f5e9; border: 1px solid #c8e6c9; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.8rem; color: #2e7d32; }
+        .parse-error { background: #fce4ec; border: 1px solid #f8bbd0; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.8rem; color: #c62828; }
+        .url-method-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 16px; }
+        .url-method-row .url-field { flex: 1; }
+        .body-stats { font-size: 0.72rem; color: #80878F; margin-top: 4px; }
+        @media (max-width: 640px) {
+            .container { padding: 14px; }
+            h1 { font-size: 1.25rem; }
+            .card { padding: 16px; }
+            .url-method-row { flex-direction: column; gap: 12px; }
+            .chip { padding: 10px 16px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+            .btn { min-height: 44px; }
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; }
+            .headers-table { min-width: 400px; }
+            .headers-table .remove-btn { font-size: 1.3rem; min-height: 40px; }
+            .tool-nav { gap: 4px; }
+            .tool-nav a { padding: 8px 10px; font-size: 0.72rem; flex: 1; text-align: center; min-height: 38px; display: flex; align-items: center; justify-content: center; }
+            .page-header { padding: 14px 14px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <nav class="tool-nav">
+            <a href="./index.html">All Tools</a>
+            <a href="./generic-api-config-tool.html">API Config</a>
+            <a href="./ops-tool.html">Ops</a>
+            <a href="./developer-portal-tool.html">Dev Portal</a>
+            <a href="./curl-builder-tool.html" class="active">Curl Builder</a>
+        </nav>
+    </div>
+    <div class="container">
+        <h1>Curl Builder Tool</h1>
+        <p class="subtitle">Paste ambassador log lines, parse into editable curl, and execute</p>
+
+        <!-- ==================== LOG INPUT ==================== -->
+        <div class="card">
+            <div class="card-title">Paste Log Line <span class="badge badge-blue">Step 1</span></div>
+            <div class="info-box">
+                <p>Paste an ambassador request log line. Supports format:<br>
+                <code>URI: http://..., Method: POST, Headers: [key:"value", ...] , body: {...}</code></p>
+            </div>
+            <div class="form-group">
+                <textarea id="logInput" rows="6" placeholder="Paste your log line here..."></textarea>
+            </div>
+            <div class="btn-group" style="margin-top:0;">
+                <button class="btn btn-primary" onclick="parseLog()">Parse Log</button>
+                <button class="btn btn-outline btn-sm" onclick="clearAll()">Clear All</button>
+            </div>
+            <div id="parseStatus" style="margin-top:12px;"></div>
+        </div>
+
+        <!-- ==================== PARSED / EDITABLE FIELDS ==================== -->
+        <div class="card hidden" id="editCard">
+            <div class="card-title">Request Editor <span class="badge badge-amber">Step 2 - Editable</span></div>
+
+            <!-- URL + Method -->
+            <div class="url-method-row">
+                <div class="url-field">
+                    <label>URL</label>
+                    <input type="text" id="reqUrl" placeholder="http://...">
+                </div>
+                <div>
+                    <label>Method</label>
+                    <div class="chip-group" id="methodChips">
+                        <div class="chip get" data-val="GET">GET</div>
+                        <div class="chip post" data-val="POST">POST</div>
+                        <div class="chip put" data-val="PUT">PUT</div>
+                        <div class="chip delete" data-val="DELETE">DELETE</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Headers -->
+            <div class="form-group">
+                <label>Headers</label>
+                <div class="headers-scroll">
+                    <table class="headers-table" id="headersTable">
+                        <thead>
+                            <tr><th class="key-col">Key</th><th class="val-col">Value</th><th class="act-col"></th></tr>
+                        </thead>
+                        <tbody id="headersBody"></tbody>
+                    </table>
+                </div>
+                <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addHeaderRow('', '')">+ Add Header</button>
+            </div>
+
+            <!-- Body -->
+            <div class="form-group">
+                <label>Request Body</label>
+                <textarea id="reqBody" rows="12" placeholder="{}"></textarea>
+                <div class="body-stats" id="bodyStats"></div>
+            </div>
+
+            <!-- Curl Preview -->
+            <div class="form-group">
+                <label>Curl Preview</label>
+                <div class="curl-preview" id="curlPreview">Parse a log line to see the curl preview...</div>
+                <div class="btn-group" style="margin-top:8px;">
+                    <button class="btn btn-outline btn-sm" onclick="copyCurl()">Copy Curl</button>
+                </div>
+            </div>
+
+            <!-- Execute -->
+            <div class="btn-group">
+                <button class="btn btn-green" id="executeBtn" onclick="executeRequest()">Execute Request</button>
+            </div>
+
+            <div id="execResults" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <script>
+        var PROXY_URL = window.location.origin + '/ambassador/admin/tools/proxy';
+        var REQUEST_TIMEOUT_MS = 15000;
+        var originalFetch = window.fetch.bind(window);
+        window.fetch = function(resource, options) {
+            options = options || {};
+            if (options.signal) return originalFetch(resource, options);
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function() { controller.abort(); }, REQUEST_TIMEOUT_MS);
+            return originalFetch(resource, Object.assign({}, options, { signal: controller.signal }))
+                .catch(function(err) {
+                    if (err.name === 'AbortError') {
+                        throw new Error('Request timed out after ' + (REQUEST_TIMEOUT_MS / 1000) + 's. If this is hosted on GitHub Pages, Execute will not work because the Node proxy is not running.');
+                    }
+                    throw err;
+                })
+                .finally(function() { clearTimeout(timeoutId); });
+        };
+
+        async function readProxyJson(resp) {
+            var contentType = resp.headers.get('content-type') || '';
+            if (!resp.ok) {
+                throw new Error('Proxy endpoint unavailable (' + resp.status + '). Execute requires server.js; GitHub Pages/static hosting only serves the UI.');
+            }
+            if (contentType.indexOf('application/json') === -1) {
+                await resp.text();
+                throw new Error('Proxy endpoint did not return JSON. Execute requires the Node server.js proxy; GitHub Pages/static hosting cannot execute requests.');
+            }
+            return await resp.json();
+        }
+
+        var selectedMethod = null;
+        // Skip these headers — they are managed by the HTTP client or are hop-by-hop
+        var SKIP_HEADERS = ['content-length', 'connection', 'host', 'transfer-encoding', 'te', 'trailer', 'upgrade'];
+
+        // ==================== METHOD CHIPS ====================
+        document.querySelectorAll('#methodChips .chip').forEach(function(chip) {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('#methodChips .chip').forEach(function(c) { c.classList.remove('active'); });
+                chip.classList.add('active');
+                selectedMethod = chip.dataset.val;
+                updateCurlPreview();
+            });
+        });
+
+        function setMethod(m) {
+            selectedMethod = m ? m.toUpperCase() : null;
+            document.querySelectorAll('#methodChips .chip').forEach(function(c) {
+                c.classList.toggle('active', c.dataset.val === selectedMethod);
+            });
+        }
+
+        // ==================== HEADER ROWS ====================
+        function addHeaderRow(key, value) {
+            var tbody = document.getElementById('headersBody');
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td class="key-col"><input type="text" value="' + escapeAttr(key) + '" onchange="updateCurlPreview()"></td>' +
+                '<td class="val-col"><input type="text" value="' + escapeAttr(value) + '" onchange="updateCurlPreview()"></td>' +
+                '<td class="act-col"><button class="remove-btn" onclick="this.closest(\'tr\').remove(); updateCurlPreview();">&times;</button></td>';
+            tbody.appendChild(tr);
+        }
+
+        function getHeaders() {
+            var headers = {};
+            document.querySelectorAll('#headersBody tr').forEach(function(tr) {
+                var inputs = tr.querySelectorAll('input');
+                var k = inputs[0].value.trim();
+                var v = inputs[1].value.trim();
+                if (k) headers[k] = v;
+            });
+            return headers;
+        }
+
+        function clearHeaders() {
+            document.getElementById('headersBody').innerHTML = '';
+        }
+
+        // ==================== PARSING ====================
+        function parseLog() {
+            var raw = document.getElementById('logInput').value.trim();
+            var statusEl = document.getElementById('parseStatus');
+
+            if (!raw) {
+                statusEl.innerHTML = '<div class="parse-error">Please paste a log line first.</div>';
+                return;
+            }
+
+            try {
+                var result = doParseLog(raw);
+
+                // Populate fields
+                document.getElementById('reqUrl').value = result.url;
+                setMethod(result.method);
+
+                clearHeaders();
+                Object.entries(result.headers).forEach(function(entry) {
+                    if (SKIP_HEADERS.indexOf(entry[0].toLowerCase()) === -1) {
+                        addHeaderRow(entry[0], entry[1]);
+                    }
+                });
+
+                if (result.body) {
+                    try {
+                        var parsed = JSON.parse(result.body);
+                        document.getElementById('reqBody').value = JSON.stringify(parsed, null, 2);
+                    } catch(e) {
+                        document.getElementById('reqBody').value = result.body;
+                    }
+                } else {
+                    document.getElementById('reqBody').value = '';
+                }
+
+                updateBodyStats();
+                updateCurlPreview();
+
+                var headerCount = Object.keys(result.headers).length;
+                var bodyLen = result.body ? result.body.length : 0;
+                statusEl.innerHTML = '<div class="parse-success">Parsed successfully: ' +
+                    result.method + ' ' + result.url + ' | ' +
+                    headerCount + ' headers | body: ' + formatBytes(bodyLen) + '</div>';
+
+                document.getElementById('editCard').classList.remove('hidden');
+
+            } catch(err) {
+                statusEl.innerHTML = '<div class="parse-error">Parse failed: ' + escapeHtml(err.message) + '</div>';
+            }
+        }
+
+        function doParseLog(raw) {
+            var url = '';
+            var method = '';
+            var headers = {};
+            var body = '';
+
+            // Extract URI
+            var uriMatch = raw.match(/URI:\s*(https?:\/\/[^\s,]+)/i);
+            if (uriMatch) {
+                url = uriMatch[1];
+            }
+
+            // Extract Method
+            var methodMatch = raw.match(/Method:\s*(GET|POST|PUT|DELETE|PATCH)/i);
+            if (methodMatch) {
+                method = methodMatch[1].toUpperCase();
+            }
+
+            // Extract Headers block: Headers: [...]
+            var headersMatch = raw.match(/Headers:\s*\[([\s\S]*?)\]\s*,?\s*body:/i);
+            if (!headersMatch) {
+                // Try without body
+                headersMatch = raw.match(/Headers:\s*\[([\s\S]*?)\]/i);
+            }
+            if (headersMatch) {
+                var hBlock = headersMatch[1];
+                // Match key:"value" pairs — value may contain commas, colons, etc.
+                var hRegex = /([\w\-]+)\s*:\s*"([^"]*)"/g;
+                var hm;
+                while ((hm = hRegex.exec(hBlock)) !== null) {
+                    headers[hm[1]] = hm[2];
+                }
+            }
+
+            // Extract body: everything after ", body: " or " body: "
+            var bodyMatch = raw.match(/,?\s*body:\s*([\s\S]+)$/i);
+            if (bodyMatch) {
+                body = bodyMatch[1].trim();
+                // Clean up escaped quotes that may come from log formatting
+                // Try parsing as-is first; if it fails, try unescaping \" to "
+                try {
+                    JSON.parse(body);
+                } catch(e) {
+                    if (body.indexOf('\\"') !== -1) {
+                        body = body.replace(/\\"/g, '"');
+                    }
+                }
+            }
+
+            if (!url && !method) {
+                throw new Error('Could not find URI or Method in the log line. Expected format: URI: http://..., Method: POST, Headers: [...], body: {...}');
+            }
+
+            return { url: url, method: method || 'GET', headers: headers, body: body };
+        }
+
+        // ==================== BODY STATS ====================
+        function updateBodyStats() {
+            var bodyVal = document.getElementById('reqBody').value;
+            var stats = document.getElementById('bodyStats');
+            if (!bodyVal.trim()) {
+                stats.textContent = '';
+                return;
+            }
+            var bytes = new Blob([bodyVal]).size;
+            stats.textContent = formatBytes(bytes) + ' | ' + bodyVal.length + ' chars';
+            try {
+                var parsed = JSON.parse(bodyVal);
+                var keys = Object.keys(parsed);
+                var arrayKeys = keys.filter(function(k) { return Array.isArray(parsed[k]); });
+                if (arrayKeys.length > 0) {
+                    var arrInfo = arrayKeys.map(function(k) { return k + ': ' + parsed[k].length + ' items'; }).join(', ');
+                    stats.textContent += ' | Arrays: ' + arrInfo;
+                }
+            } catch(e) {}
+        }
+
+        document.getElementById('reqBody').addEventListener('input', function() {
+            updateBodyStats();
+            updateCurlPreview();
+        });
+        document.getElementById('reqUrl').addEventListener('input', updateCurlPreview);
+
+        // ==================== CURL PREVIEW ====================
+        function updateCurlPreview() {
+            var url = document.getElementById('reqUrl').value.trim();
+            var method = selectedMethod || 'GET';
+            var headers = getHeaders();
+            var body = document.getElementById('reqBody').value.trim();
+            var preview = document.getElementById('curlPreview');
+
+            if (!url) {
+                preview.textContent = 'Parse a log line to see the curl preview...';
+                return;
+            }
+
+            var lines = ["curl --location '" + url + "'"];
+            lines.push("--request " + method);
+            Object.entries(headers).forEach(function(entry) {
+                lines.push("--header '" + entry[0] + ": " + entry[1] + "'");
+            });
+
+            if (body && method !== 'GET') {
+                // For large bodies, truncate in preview
+                var displayBody = body;
+                if (displayBody.length > 2000) {
+                    displayBody = displayBody.substring(0, 2000) + '\n... [truncated in preview, full body will be sent]';
+                }
+                lines.push("--data '" + displayBody + "'");
+            }
+
+            preview.textContent = lines.join(' \\\n');
+        }
+
+        function copyCurl() {
+            var url = document.getElementById('reqUrl').value.trim();
+            var method = selectedMethod || 'GET';
+            var headers = getHeaders();
+            var body = document.getElementById('reqBody').value.trim();
+
+            var lines = ["curl --location '" + url + "'"];
+            lines.push("--request " + method);
+            Object.entries(headers).forEach(function(entry) {
+                lines.push("--header '" + entry[0] + ": " + entry[1] + "'");
+            });
+            if (body && method !== 'GET') {
+                lines.push("--data '" + body + "'");
+            }
+
+            var text = lines.join(' \\\n');
+            copyToClipboard(text, document.querySelector('.btn-outline[onclick="copyCurl()"]'));
+        }
+
+        function copyToClipboard(text, btn) {
+            // Try modern clipboard API first, fall back to execCommand
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(function() {
+                    flashButton(btn, 'Copied!');
+                }).catch(function() {
+                    fallbackCopy(text, btn);
+                });
+            } else {
+                fallbackCopy(text, btn);
+            }
+        }
+
+        function fallbackCopy(text, btn) {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                flashButton(btn, 'Copied!');
+            } catch(e) {
+                flashButton(btn, 'Copy failed');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function flashButton(btn, msg) {
+            if (!btn) return;
+            var orig = btn.textContent;
+            btn.textContent = msg;
+            setTimeout(function() { btn.textContent = orig; }, 1500);
+        }
+
+        // ==================== EXECUTE ====================
+        async function executeRequest() {
+            var url = document.getElementById('reqUrl').value.trim();
+            var method = selectedMethod || 'GET';
+            var headers = getHeaders();
+            var body = document.getElementById('reqBody').value.trim();
+
+            if (!url) {
+                alert('Please provide a URL.');
+                return;
+            }
+
+            var container = document.getElementById('execResults');
+            container.innerHTML = '';
+
+            var executeBtn = document.getElementById('executeBtn');
+            executeBtn.disabled = true;
+            executeBtn.innerHTML = '<span class="spinner"></span>Executing...';
+
+            // Build proxy request
+            var proxyBody = {
+                targetUrl: url,
+                method: method
+            };
+            if (Object.keys(headers).length > 0) {
+                proxyBody.headers = headers;
+            }
+            if (body && method !== 'GET') {
+                try {
+                    proxyBody.payload = JSON.parse(body);
+                } catch(e) {
+                    proxyBody.rawBody = body;
+                }
+                // Ensure Content-Type is set
+                if (!proxyBody.headers) proxyBody.headers = {};
+                if (!proxyBody.headers['Content-Type'] && !proxyBody.headers['content-type']) {
+                    proxyBody.headers['Content-Type'] = 'application/json';
+                }
+            }
+
+            try {
+                var resp = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(proxyBody)
+                });
+                var data = await readProxyJson(resp);
+
+                var isOk = data.status && data.status >= 200 && data.status < 300;
+                var statusClass = data.error ? 'error' : (isOk ? 'success' : 'error');
+                var statusText = data.error ? 'Failed' : (data.status + ' ' + data.statusText);
+                var bodyText = data.error || data.body || '';
+                try { bodyText = JSON.stringify(JSON.parse(bodyText), null, 2); } catch(e) {}
+
+                container.innerHTML =
+                    '<div class="result-block">' +
+                        '<div class="result-header">' +
+                            '<span class="label">Response</span>' +
+                            '<span class="result-status ' + statusClass + '">' + statusText + '</span>' +
+                        '</div>' +
+                        '<div class="result-body"><pre>' + escapeHtml(bodyText) + '</pre></div>' +
+                    '</div>';
+            } catch(err) {
+                container.innerHTML =
+                    '<div class="result-block">' +
+                        '<div class="result-header">' +
+                            '<span class="label">Response</span>' +
+                            '<span class="result-status error">Failed</span>' +
+                        '</div>' +
+                        '<div class="result-body"><pre>' + escapeHtml(err.message) + '</pre></div>' +
+                    '</div>';
+            }
+
+            executeBtn.disabled = false;
+            executeBtn.innerHTML = 'Execute Request';
+        }
+
+        // ==================== CLEAR ====================
+        function clearAll() {
+            document.getElementById('logInput').value = '';
+            document.getElementById('parseStatus').innerHTML = '';
+            document.getElementById('editCard').classList.add('hidden');
+            document.getElementById('reqUrl').value = '';
+            setMethod(null);
+            clearHeaders();
+            document.getElementById('reqBody').value = '';
+            document.getElementById('bodyStats').textContent = '';
+            document.getElementById('curlPreview').textContent = 'Parse a log line to see the curl preview...';
+            document.getElementById('execResults').innerHTML = '';
+        }
+
+        // ==================== UTILS ====================
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function escapeAttr(str) {
+            return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+    </script>
+</body>
+</html>
