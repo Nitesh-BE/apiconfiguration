@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "proxy.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin"
+      },
+      "continue": true
+    },
+    {
+      "src": "/ambassador/admin/tools/proxy",
+      "dest": "/proxy.js"
+    },
+    {
+      "src": "/ambassador/admin/tools",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/ambassador/admin/curl-builder-tool",
+      "dest": "/curl-builder-tool.html"
+    },
+    {
+      "src": "/ambassador/admin/developer-portal-tool",
+      "dest": "/developer-portal-tool.html"
+    },
+    {
+      "src": "/ambassador/admin/generic-api-config-tool",
+      "dest": "/generic-api-config-tool.html"
+    },
+    {
+      "src": "/ambassador/admin/ops-tool",
+      "dest": "/ops-tool.html"
+    },
+    {
+      "src": "/tools",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    }
+  ]
+}

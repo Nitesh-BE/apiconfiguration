@@ -108,6 +108,24 @@
             .tool-card:hover { transform: none; }
         }
     </style>
+    <script>
+        window.va = window.va || function() { (window.vaq = window.vaq || []).push(arguments); };
+        window.si = window.si || function() { (window.siq = window.siq || []).push(arguments); };
+        (function() {
+            var host = window.location.hostname;
+            var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+            if (isLocal) return;
+            function addVercelScript(src, dataset) {
+                var script = document.createElement('script');
+                script.defer = true;
+                script.src = src;
+                Object.keys(dataset).forEach(function(key) { script.dataset[key] = dataset[key]; });
+                document.head.appendChild(script);
+            }
+            addVercelScript('/_vercel/insights/script.js', { sdkn: '@vercel/analytics/html', sdkv: '2.0.1' });
+            addVercelScript('/_vercel/speed-insights/script.js', { sdkn: '@vercel/speed-insights/html', sdkv: '2.0.0' });
+        })();
+    </script>
 </head>
 <body>
     <div class="page-header">

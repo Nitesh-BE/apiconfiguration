@@ -104,6 +104,7 @@
         .method-chip.get.active { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
         .method-chip.post.active { border-color: #ff9800; background: #fff3e0; color: #e65100; }
         .method-chip.put.active { border-color: #1976d2; background: #e3f2fd; color: #1565c0; }
+        .method-chip.patch.active { border-color: #7b1fa2; background: #ede7f6; color: #6a1b9a; }
         .method-chip.delete.active { border-color: #f44336; background: #fce4ec; color: #c62828; }
 
         /* Path input */
@@ -156,6 +157,24 @@
             .page-header { padding: 14px 14px 12px; }
         }
     </style>
+    <script>
+        window.va = window.va || function() { (window.vaq = window.vaq || []).push(arguments); };
+        window.si = window.si || function() { (window.siq = window.siq || []).push(arguments); };
+        (function() {
+            var host = window.location.hostname;
+            var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+            if (isLocal) return;
+            function addVercelScript(src, dataset) {
+                var script = document.createElement('script');
+                script.defer = true;
+                script.src = src;
+                Object.keys(dataset).forEach(function(key) { script.dataset[key] = dataset[key]; });
+                document.head.appendChild(script);
+            }
+            addVercelScript('/_vercel/insights/script.js', { sdkn: '@vercel/analytics/html', sdkv: '2.0.1' });
+            addVercelScript('/_vercel/speed-insights/script.js', { sdkn: '@vercel/speed-insights/html', sdkv: '2.0.0' });
+        })();
+    </script>
 </head>
 <body>
     <div class="page-header">
@@ -252,6 +271,7 @@
                 <div class="method-chip get" data-method="GET">GET</div>
                 <div class="method-chip post" data-method="POST">POST</div>
                 <div class="method-chip put" data-method="PUT">PUT</div>
+                <div class="method-chip patch" data-method="PATCH">PATCH</div>
                 <div class="method-chip delete" data-method="DELETE">DELETE</div>
             </div>
         </div>
@@ -333,15 +353,59 @@
         const REQUEST_TIMEOUT_MS = 15000;
         const originalFetch = window.fetch.bind(window);
 
+        function getSavedProxyToken() {
+            try { return sessionStorage.getItem('toolProxyToken') || ''; } catch(e) { return ''; }
+        }
+
+        function saveProxyToken(token) {
+            try { sessionStorage.setItem('toolProxyToken', token); } catch(e) {}
+        }
+
+        function cloneHeaders(headers) {
+            var nextHeaders = {};
+            if (headers instanceof Headers) {
+                headers.forEach(function(value, key) { nextHeaders[key] = value; });
+            } else if (Array.isArray(headers)) {
+                headers.forEach(function(pair) { nextHeaders[pair[0]] = pair[1]; });
+            } else {
+                Object.assign(nextHeaders, headers || {});
+            }
+            return nextHeaders;
+        }
+
+        function isLocalProxyRequest(resource) {
+            var url = typeof resource === 'string' ? resource : (resource && resource.url) || '';
+            if (!url) return false;
+            try {
+                var parsed = new URL(url, window.location.origin);
+                return parsed.origin === window.location.origin && parsed.pathname === '/ambassador/admin/tools/proxy';
+            } catch(e) {
+                return false;
+            }
+        }
+
+        function buildRequestOptions(resource, options) {
+            var nextOptions = Object.assign({}, options || {});
+            if (isLocalProxyRequest(resource)) {
+                var headers = cloneHeaders(nextOptions.headers);
+                var token = getSavedProxyToken();
+                if (token && !headers['X-Tool-Proxy-Token'] && !headers['x-tool-proxy-token']) {
+                    headers['X-Tool-Proxy-Token'] = token;
+                }
+                nextOptions.headers = headers;
+            }
+            return nextOptions;
+        }
+
         window.fetch = function(resource, options) {
-            options = options || {};
+            options = buildRequestOptions(resource, options);
             if (options.signal) return originalFetch(resource, options);
             const controller = new AbortController();
             const timeoutId = setTimeout(function() { controller.abort(); }, REQUEST_TIMEOUT_MS);
             return originalFetch(resource, Object.assign({}, options, { signal: controller.signal }))
                 .catch(function(err) {
                     if (err.name === 'AbortError') {
-                        throw new Error('Request timed out after ' + (REQUEST_TIMEOUT_MS / 1000) + 's. If this is hosted on GitHub Pages, Execute will not work because the Node proxy is not running.');
+                        throw new Error('Request timed out after ' + (REQUEST_TIMEOUT_MS / 1000) + 's. The proxy endpoint did not answer in time.');
                     }
                     throw err;
                 })
@@ -350,14 +414,26 @@
 
         async function readProxyJson(resp) {
             const contentType = resp.headers.get('content-type') || '';
+            if (contentType.indexOf('application/json') !== -1) {
+                const data = await resp.json();
+                if (!resp.ok) {
+                    if (resp.status === 401) {
+                        var token = window.prompt('Enter the proxy token configured as TOOL_PROXY_TOKEN in Vercel.');
+                        if (token) {
+                            saveProxyToken(token.trim());
+                            throw new Error('Proxy token saved. Run the request again.');
+                        }
+                    }
+                    throw new Error(data.error || ('Proxy endpoint unavailable (' + resp.status + ').'));
+                }
+                return data;
+            }
             if (!resp.ok) {
-                throw new Error('Proxy endpoint unavailable (' + resp.status + '). Execute requires server.js; GitHub Pages/static hosting only serves the UI.');
-            }
-            if (contentType.indexOf('application/json') === -1) {
                 await resp.text();
-                throw new Error('Proxy endpoint did not return JSON. Execute requires the Node server.js proxy; GitHub Pages/static hosting cannot execute requests.');
+                throw new Error('Proxy endpoint unavailable (' + resp.status + ').');
             }
-            return await resp.json();
+            await resp.text();
+            throw new Error('Proxy endpoint did not return JSON.');
         }
 
         function getEnvUrl(envKey) {
